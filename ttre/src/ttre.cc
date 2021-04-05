@@ -4,6 +4,6 @@
 
 int main()
 {
-    Ttre::Tokens t = Ttre::Tokens::_from_string("T_CHAR");
+    TTre::Tokens t = TTre::Tokens::_from_string("T_CHAR");
     std::cout << t;
 }
