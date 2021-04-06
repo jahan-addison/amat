@@ -1,4 +1,4 @@
-#include <ttre/include/lexer.h>
+#include <ttre/include/ttre.h>
 #include <iostream>
 
 int main()

@@ -9,5 +9,6 @@ namespace TTre
         T_CHAR,
         T_UNKNOWN,
         T_END)
+
 } // namespace TTre
 #endif

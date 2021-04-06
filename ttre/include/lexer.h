@@ -1,6 +1,7 @@
 #ifndef TTRE_LEXER_H
 #include "tokens.h"
 #include <iterator> 
+#include <string_view>
 #include <cstddef>  
 
 namespace TTre
@@ -20,9 +21,9 @@ namespace TTre
             reference inline operator*() const { return *m_ptr; }
             pointer inline operator->() const { return m_ptr; }
 
-            Iterator& operator++() { m_ptr++; return *this; }
+            Iterator& operator++();
 
-            Iterator inline operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+            Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
 
             friend inline bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; };
             friend inline bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; };
@@ -34,7 +35,14 @@ namespace TTre
         Iterator begin();
         Iterator end();
 
+        Lexer(std::string_view str) : source_(str),
+            first_(Token::T_UNKNOWN),
+            current_(Token::T_UNKNOWN),
+            last_(Token::T_UNKNOWN)
+        {}
+
     private:
+        std::string_view source_;
         Token first_;
         Token current_;
         Token last_;
