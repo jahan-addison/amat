@@ -3,29 +3,17 @@
 
 namespace TTre
 {
-    LexerIterator Lexer::begin()
-    {
-        return LexerIterator(&first_);
-    }
-    LexerIterator& LexerIterator::operator++()
-    {
-        // TODO
-        return *this;
-    }
-
-    LexerIterator Lexer::end()
-    {
-        return LexerIterator(&last_);
-    }
-
-    Token Lexer::get_next_token_()
+    Token Lexer::get_next_token()
     {
         auto token = Token::T_UNKNOWN;
         auto read = this->source_[this->location_];
-
+        if (this->current_)
+        {
+            this->last_ = this->current_;
+        }
         if (this->location_ >= this->source_.length())
         {
-            this->current_ = this->last_ = Token::T_END;
+            this->current_ = Token::T_END;
             return Token::T_END;
         }
 
@@ -36,7 +24,7 @@ namespace TTre
 
         if (read == '|')
         {
-            token = Token::T_KLEENE_STAR;
+            token = Token::T_UNION;
         }
 
         if (std::isalpha(static_cast<unsigned char>(read)))
@@ -44,6 +32,10 @@ namespace TTre
             token = Token::T_CHAR;
         }
         this->location_++;
+        if (!this->first_)
+        {
+            this->first_ = token;
+        }
         return token;
     }
 
