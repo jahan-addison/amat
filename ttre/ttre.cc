@@ -1,4 +1,4 @@
-#include <ttre/include/ttre.h>
+#include <ttre/ttre.h>
 #include <iostream>
 
 int main()

@@ -7,7 +7,7 @@ OBJ_DIR  := $(BUILD)/objects
 TARGET   := program
 INCLUDE  := -I.
 SRC      :=                       \
-	 $(wildcard ttre/src/*.cc)      \
+	 $(wildcard ttre/*.cc)      \
 
 OBJECTS  := $(SRC:%.cc=$(OBJ_DIR)/%.o)
 DEPENDENCIES \

@@ -1,5 +1,5 @@
 #ifndef TTRE_TOKENS_H
-#include <ttre/include/enum.h>
+#include <ttre/enum.h>
 
 namespace TTre
 {
