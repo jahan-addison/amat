@@ -1,26 +1,38 @@
 #ifndef TTRE_LEXER_H
 #include "tokens.h"
-#include <iostream> 
 #include <string_view>
-#include <cstddef>  
+#include <optional>
 
 namespace TTre
 {
     class Lexer
     {
     public:
-        Lexer(std::string_view str) : source_(str),
-            first_(Token::T_UNKNOWN),
+        Lexer(Lexer const&) = default;
+        constexpr Lexer(std::string_view str) : source_(str),
+            pointer_(0),
             current_(Token::T_UNKNOWN),
             last_(Token::T_UNKNOWN)
         {}
 
+    public:
         Token get_next_token();
+        inline std::optional<unsigned char> scanner() const
+        {
+            return scanner_;
+        }
+
+    public:
+        Lexer operator++(int);
+        inline Token operator*()
+        {
+            return current_;
+        }
 
     private:
-        unsigned int location_ = 0;
         std::string_view source_;
-        Token first_;
+        unsigned int pointer_;
+        std::optional<unsigned char> scanner_;
         Token current_;
         Token last_;
     };
