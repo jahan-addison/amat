@@ -42,7 +42,7 @@ namespace TTre
         std::string output_{};
         std::string operators_{};
     };
-}
+} // namespace TTre
 
 
 #endif // TTRE_PARSER_H
