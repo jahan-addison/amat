@@ -1,5 +1,5 @@
 #ifndef TTRE_LEXER_H
-#include "tokens.h"
+#include <ttre/tokens.h>
 #include <string_view>
 #include <optional>
 
@@ -9,7 +9,7 @@ namespace TTre
     {
     public:
         Lexer(Lexer const&) = default;
-        constexpr Lexer(std::string_view str) : source_(str),
+        explicit Lexer(std::string_view str) : source_(str),
             pointer_(0),
             current_(Token::T_UNKNOWN),
             last_(Token::T_UNKNOWN)
@@ -24,7 +24,7 @@ namespace TTre
 
     public:
         Lexer operator++(int);
-        inline Token operator*()
+        inline Token operator*() const
         {
             return current_;
         }
