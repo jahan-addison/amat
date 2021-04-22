@@ -1,7 +1,5 @@
 #ifndef TTRE_PARSER_H
 #include <ttre/lexer.h>
-#include <stack>
-#include <queue>
 
 namespace TTre
 {
