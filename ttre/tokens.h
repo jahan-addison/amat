@@ -1,18 +1,19 @@
 #ifndef TTRE_TOKENS_H
-#include <ttre/enum.h>
 
 namespace TTre
 {
-    BETTER_ENUM(Token, unsigned short,
+    enum class Token : unsigned short
+    {
         T_OPEN_PAREN = 1,
         T_CLOSE_PAREN,
         T_KLEENE_STAR,
         T_UNION,
         T_CHAR,
         T_UNKNOWN,
-        T_END)
+        T_END
+    };
 
-        constexpr const char* as_string(Token token)
+    constexpr const char* token_as_string(Token token)
     {
         switch (token)
         {
@@ -28,7 +29,6 @@ namespace TTre
         return "T_UNKNOWN";
     }
 
-    constexpr auto token_as_string = better_enums::make_map(as_string);
-
 } // namespace TTre
-#endif
+
+#endif // TTRE_TOKENS_H

@@ -11,11 +11,11 @@ namespace TTre
     }
     Token Lexer::get_next_token()
     {
-        TTre::Token::_enumerated token = Token::T_UNKNOWN;
+        Token token = Token::T_UNKNOWN;
         unsigned char read = static_cast<unsigned char>(this->source_[this->pointer_]);
 
-        if (this->current_)
-            this->last_ = this->current_;
+        this->last_ = this->current_;
+
         if (this->pointer_ >= this->source_.length())
         {
             this->current_ = Token::T_END;

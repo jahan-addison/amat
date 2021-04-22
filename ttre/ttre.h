@@ -1,3 +1,3 @@
 #ifndef TTRE_TTRE_H
-#include <ttre/lexer.h>
+#include <ttre/parser.h>
 #endif

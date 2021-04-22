@@ -21,6 +21,10 @@ namespace TTre
         {
             return scanner_;
         }
+        inline unsigned int pointer()
+        {
+            return pointer_;
+        }
 
     public:
         Lexer operator++(int);
