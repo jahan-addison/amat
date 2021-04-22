@@ -22,7 +22,6 @@ namespace TTre
     {
     public:
         // using enum OPERATOR_ORDER;
-
         Parser(Parser const&) = default;
         explicit Parser(std::string_view str) : source_(str), lexer_(str)
         {}
