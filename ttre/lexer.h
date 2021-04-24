@@ -1,9 +1,10 @@
-#ifndef TTRE_LEXER_H
+#pragma once
+
 #include <ttre/tokens.h>
 #include <string_view>
 #include <optional>
 
-namespace TTre
+namespace ttre
 {
     class Lexer
     {
@@ -41,6 +42,5 @@ namespace TTre
         Token last_;
     };
 
-} // namespace TTre
+}
 
-#endif // TTRE_LEXER_H

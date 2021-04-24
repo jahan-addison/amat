@@ -1,3 +1,7 @@
-#ifndef TTRE_TTRE_H
+#pragma once
+
+#include <ttre/tokens.h>
+#include <ttre/lexer.h> 
 #include <ttre/parser.h>
-#endif
+#include <ttre/nfa.h>
+

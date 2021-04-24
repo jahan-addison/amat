@@ -1,6 +1,6 @@
-#ifndef TTRE_TOKENS_H
+#pragma once
 
-namespace TTre
+namespace ttre
 {
     enum class Token : unsigned short
     {
@@ -29,6 +29,4 @@ namespace TTre
         return "T_UNKNOWN";
     }
 
-} // namespace TTre
-
-#endif // TTRE_TOKENS_H
+}

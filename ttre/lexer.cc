@@ -1,8 +1,9 @@
+#include <ttre/tokens.h>
 #include <ttre/lexer.h>
 #include <cctype>
 #include <optional>
 
-namespace TTre
+namespace ttre
 {
     Lexer Lexer::operator++(int)
     {
@@ -44,4 +45,4 @@ namespace TTre
         return token;
     }
 
-} // namespace TTre
+} // namespace ttre

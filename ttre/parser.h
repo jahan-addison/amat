@@ -1,8 +1,10 @@
-#ifndef TTRE_PARSER_H
+#pragma once
+
+#include <ttre/tokens.h>
 #include <ttre/lexer.h>
 #include <string>
 
-namespace TTre
+namespace ttre
 {
     /* Order of precedence: Highest to lowest - Associativity
       1) Parenthesis    - non-associative
@@ -15,7 +17,7 @@ namespace TTre
         T_OPEN_PAREN = 4,
         T_CLOSE_PAREN = 4,
         T_KLEENE_STAR = 3,
-        T_CHAR = 2, // concatenation
+        T_CONCAT = 2,
         T_UNION = 1,
         T_UNKNOWN = 0
     };
@@ -27,7 +29,7 @@ namespace TTre
         case '(': return Operator::T_OPEN_PAREN;
         case ')': return Operator::T_CLOSE_PAREN;
         case '*': return Operator::T_KLEENE_STAR;
-        case '.': return Operator::T_CHAR;
+        case '.': return Operator::T_CONCAT;
         case '|': return Operator::T_UNION;
         }
         return Operator::T_UNKNOWN;
@@ -56,6 +58,4 @@ namespace TTre
         std::string output_{};
         std::string operators_{};
     };
-} // namespace TTre
-
-#endif // TTRE_PARSER_H
+} // namespace ttre

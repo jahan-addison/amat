@@ -1,8 +1,9 @@
+#include <ttre/tokens.h>
 #include <ttre/parser.h>
 #include <stdexcept>
 #include <iostream>
 
-namespace TTre
+namespace ttre
 {
     void Parser::parse_kleene_star_()
     {
@@ -77,7 +78,7 @@ namespace TTre
 
     std::string_view Parser::parse()
     {
-        while (*this->lexer_++ != TTre::Token::T_END)
+        while (*this->lexer_++ != ttre::Token::T_END)
         {
             auto token = *this->lexer_;
             switch (token)
@@ -115,4 +116,4 @@ namespace TTre
         }
         return this->output_;
     }
-} // namespace TTre
+} // namespace ttre
