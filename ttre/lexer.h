@@ -42,5 +42,5 @@ namespace ttre
         Token last_;
     };
 
-}
+} // namespace ttre
 

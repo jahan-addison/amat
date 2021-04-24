@@ -29,4 +29,4 @@ namespace ttre
         return "T_UNKNOWN";
     }
 
-}
+} // namespace ttre

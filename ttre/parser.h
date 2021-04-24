@@ -58,4 +58,5 @@ namespace ttre
         std::string output_{};
         std::string operators_{};
     };
+
 } // namespace ttre
