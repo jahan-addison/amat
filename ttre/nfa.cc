@@ -2,6 +2,7 @@
 #include <ttre/nfa.h>
 
 #include <string_view>
+#include <iostream>
 #include <stdexcept>
 
 namespace ttre
@@ -18,7 +19,6 @@ namespace ttre
         {
             Edge edge{symbol, {this->start, state}};
             this->edges.push_back(edge);
-
         }
         else
         {
@@ -72,7 +72,6 @@ namespace ttre
                 break;
             }
         }
-
         nfa.connect(automata.top());
         automata.pop();
         return nfa;
@@ -82,7 +81,7 @@ namespace ttre
     {
         if (automata.size() < 2)
         {
-            std::runtime_error("could not constract NFA from concat operator and the stack");
+            throw std::runtime_error("could not constract NFA from concat operator and the stack");
         }
 
         NFA arg1 = automata.top();
@@ -98,6 +97,11 @@ namespace ttre
         State start_state{start, State::Type::initial};
         State end_state{++start, State::Type::accept};
         NFA nfa{start_state};
+        if (!alphabet.contains(c))
+        {
+            std::cerr << "Invalid character: \"" << c << "\"" << std::endl;
+            throw std::runtime_error("operator not defined in alphabet");
+        }
         nfa.connect(c, end_state);
         return nfa;
     }

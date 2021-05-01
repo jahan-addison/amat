@@ -1,14 +1,14 @@
 #pragma once
 
 #include <set>
-#include <tuple>
 #include <list>
 #include <utility>
 #include <stack>
 
 namespace ttre
 {
-    std::set<unsigned char> const Alphabet = {
+    using Alphabet = std::set<unsigned char>;
+    Alphabet const alphabet = {
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 
@@ -77,6 +77,6 @@ namespace ttre
     using Automata = std::stack<NFA>;
 
     NFA construct_NFA_from_regular_expression(std::string_view source);
-    NFA construct_NFA_from_character(unsigned char c, unsigned short start = 0);
+    NFA construct_NFA_from_character(unsigned char c, unsigned short start);
     NFA construct_NFA_from_concatenation(Automata& automaton);
 } // namespace ttre

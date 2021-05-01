@@ -1,7 +1,6 @@
 #include <ttre/tokens.h>
 #include <ttre/parser.h>
 #include <stdexcept>
-#include <iostream>
 
 namespace ttre
 {
