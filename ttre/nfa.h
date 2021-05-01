@@ -2,7 +2,9 @@
 
 #include <set>
 #include <tuple>
+#include <list>
 #include <utility>
+#include <stack>
 
 namespace ttre
 {
@@ -25,10 +27,11 @@ namespace ttre
     {
         State(State const&) = default;
         State() = delete;
-        explicit State(unsigned short id_) : id(id_), type(Type::normal)
-        {}
 
         enum class Type { initial, accept, normal };
+
+        explicit State(unsigned short id_, Type type_) : id(id_), type(type_)
+        {}
 
         inline friend bool operator<(State const& state1, State const& state2)
         {
@@ -45,26 +48,35 @@ namespace ttre
     template <class T = State>
     struct Edge
     {
+        Edge() = delete;
+        explicit Edge(unsigned char symbol_, std::pair<T, T>nodes_) : symbol(symbol_), nodes(nodes_)
+        {}
         unsigned char symbol;
         std::pair<T, T> nodes;
     };
 
-    struct State_Transition_Graph
+    struct NFA
     {
         using Input = unsigned char;
+
+        explicit NFA(State start_) : start(start_)
+        {
+            states.insert(start_);
+        }
+
+        void connect(Input symbol, State& state);
+        void connect(NFA& insert);
 
         State start;
         std::set<State> states;
         std::set<State> accepted;
 
-        virtual std::set<State> transition(State s, Input symbol) = 0;
-
-        Edge<State> edges;
+        std::list<Edge<State>> edges;
     };
 
-    struct NFA : public State_Transition_Graph
-    {
-        std::set<State> transition(State s, unsigned char symbol);
-    };
+    using Automata = std::stack<NFA>;
 
+    NFA construct_NFA_from_regular_expression(std::string_view source);
+    NFA construct_NFA_from_character(unsigned char c, unsigned short start = 0);
+    NFA construct_NFA_from_concatenation(Automata& automaton);
 } // namespace ttre
