@@ -1,6 +1,6 @@
 #include <ttre/parser.h>
 #include <ttre/nfa.h>
-
+#include <algorithm>
 #include <string_view>
 #include <iostream>
 #include <stdexcept>
@@ -8,7 +8,7 @@
 namespace ttre
 {
 
-    void NFA::connect(Input symbol, State& state)
+    void NFA::connect_edge(Input symbol, State& state, size_t location)
     {
         states.insert(state);
         if (state.type == State::Type::accept)
@@ -18,21 +18,26 @@ namespace ttre
         if (edges.empty())
         {
             Edge edge{symbol, {this->start, state}};
-            this->edges.push_back(edge);
+            this->edges.push_back({edge});
         }
         else
         {
-            auto head = this->edges.front().nodes.second;
-            Edge edge{symbol, {head, state}};
-            this->edges.push_back(edge);
+            if (this->edges.size() < location)
+            {
+                Branch branch = this->edges[location];
+                State head = branch.back().nodes.second;
+                Edge edge{symbol, {head, state}};
+                branch.push_back(edge);
+
+            }
         }
     }
 
-    void NFA::connect(NFA& insert)
+    void NFA::connect_branch(Branch& to, Branch& from)
     {
-        auto first = this->edges.front();
-        auto last = this->edges.back();
-        auto last_i = insert.edges.back();
+        auto first = from.front();
+        auto last = from.back();
+        [[maybe_unused]] auto last_i = to.front();
 
         first.nodes.first.type = State::Type::initial;
         if (last.nodes.second.type == State::Type::accept)
@@ -42,9 +47,19 @@ namespace ttre
         last_i.nodes.first.type = State::Type::normal;
         last_i.nodes.second.type = State::Type::accept;
         this->start = first.nodes.first;
-        this->states.merge(insert.states);
-        this->accepted = {last_i.nodes.second};
-        this->edges.splice(this->edges.begin(), insert.edges);
+
+        from.splice(from.begin(), to);
+    }
+
+    void NFA::connect_NFA(NFA& nfa)
+    {
+        std::ranges::copy(nfa.edges.begin(), nfa.edges.end(),
+            std::back_inserter(this->edges));
+        auto front = this->edges.front().front();
+        auto back = this->edges.back().back();
+        this->states.merge(nfa.states);
+        this->start = front.nodes.first;
+        this->accepted = {back.nodes.second};
     }
 
 
@@ -59,6 +74,8 @@ namespace ttre
         {
             switch (item)
             {
+            case '|':
+                break;
             case '.':
                 automata.push(construct_NFA_from_concatenation(automata));
                 break;
@@ -66,16 +83,22 @@ namespace ttre
                 unsigned short last_id = 0;
                 if (automata.size())
                 {
-                    last_id = automata.top().edges.back().nodes.second.id + 1;
+                    last_id = automata.top().edges.back().back().nodes.second.id + 1;
                 }
                 automata.push(construct_NFA_from_character(item, last_id));
+                nfa.states.merge(automata.top().states);
                 break;
             }
         }
-        nfa.connect(automata.top());
+        nfa.connect_NFA(automata.top());
         automata.pop();
         return nfa;
     }
+
+    // NFA construct_NFA_from_union(Automata& automata)
+    // {
+
+    // }
 
     NFA construct_NFA_from_concatenation(Automata& automata)
     {
@@ -83,12 +106,11 @@ namespace ttre
         {
             throw std::runtime_error("could not constract NFA from concat operator and the stack");
         }
-
         NFA arg1 = automata.top();
         automata.pop();
         NFA arg2 = automata.top();
         automata.pop();
-        arg1.connect(arg2);
+        arg1.connect_branch(arg2.edges.front(), arg1.edges.back());
         return arg1;
     }
 
@@ -102,7 +124,7 @@ namespace ttre
             std::cerr << "Invalid character: \"" << c << "\"" << std::endl;
             throw std::runtime_error("operator not defined in alphabet");
         }
-        nfa.connect(c, end_state);
+        nfa.connect_edge(c, end_state, 0);
         return nfa;
     }
 

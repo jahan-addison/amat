@@ -2,6 +2,7 @@
 
 #include <set>
 #include <list>
+#include <vector>
 #include <utility>
 #include <stack>
 
@@ -55,28 +56,35 @@ namespace ttre
         std::pair<T, T> nodes;
     };
 
+    /**
+     * NFA represented as a adjacency-list graph.
+     */
     struct NFA
     {
         using Input = unsigned char;
+        using Branch = std::list<Edge<State>>;
+        using Edges = std::vector<Branch>;
 
         explicit NFA(State start_) : start(start_)
         {
             states.insert(start_);
         }
 
-        void connect(Input symbol, State& state);
-        void connect(NFA& insert);
+        void connect_edge(Input symbol, State& state, size_t location);
+        void connect_branch(Branch& to, Branch& from);
+        void connect_NFA(NFA& nfa);
 
         State start;
         std::set<State> states;
         std::set<State> accepted;
 
-        std::list<Edge<State>> edges;
+        Edges edges;
     };
 
     using Automata = std::stack<NFA>;
 
-    NFA construct_NFA_from_regular_expression(std::string_view source);
-    NFA construct_NFA_from_character(unsigned char c, unsigned short start);
-    NFA construct_NFA_from_concatenation(Automata& automaton);
+    NFA construct_NFA_from_regular_expression(std::string_view);
+    NFA construct_NFA_from_character(unsigned char, unsigned short);
+    NFA construct_NFA_from_concatenation(Automata&);
+    NFA construct_NFA_from_union(Automata&);
 } // namespace ttre

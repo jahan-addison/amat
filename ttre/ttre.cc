@@ -1,9 +1,9 @@
+#include <string_view>
 #include <ttre/ttre.h>
-#include <iostream>
 
 int main()
 {
-    std::string_view k = "abbc"; //"(j|k)*";
+    std::string_view k = "abc"; //"(j|k)*";
     // ttre::Lexer lexer{k};
     //ttre::Parser parser{k};
     // while (*lexer++ != +ttre::Token::T_END)
@@ -14,9 +14,5 @@ int main()
     // }
     //std::cout << parser.parse();
     ttre::NFA nfa = ttre::construct_NFA_from_regular_expression(k);
-    std::cout << "Edges count: " << nfa.edges.size() << std::endl;
-    for (auto& edge : nfa.edges)
-    {
-        std::cout << edge.nodes.first.id << " " << edge.symbol << " " << edge.nodes.second.id << " -> ";
-    }
+    ttre::util::print(nfa);
 }
