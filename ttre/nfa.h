@@ -24,6 +24,8 @@ namespace ttre
 
     };
 
+    struct State;
+
     struct State
     {
         State(State const&) = default;
