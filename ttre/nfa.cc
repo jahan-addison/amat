@@ -157,7 +157,7 @@ namespace ttre
         NFA nfa{start_state};
         if (automata.size() < 2)
         {
-            throw std::runtime_error("could not constract NFA from concat operator and the stack");
+            throw std::runtime_error("could not constract NFA from union operator and the stack");
         }
         NFA arg1 = automata.top();
         automata.pop();
