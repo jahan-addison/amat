@@ -88,7 +88,6 @@ namespace ttre
             case '|':
                 automata.push(construct_NFA_from_union(automata));
                 break;
-                break;
             case '.':
                 automata.push(construct_NFA_from_concatenation(automata));
                 break;
