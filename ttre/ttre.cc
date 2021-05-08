@@ -3,7 +3,7 @@
 
 int main()
 {
-    std::string_view k = "(a|b)|(cd)"; //"(j|k)*";
+    std::string_view k = "a|(a|(ab))*";
     // ttre::Lexer lexer{k};
     //ttre::Parser parser{k};
     // while (*lexer++ != +ttre::Token::T_END)
@@ -14,5 +14,5 @@ int main()
     // }
     // std::cout << parser.parse();
     ttre::NFA nfa = ttre::construct_NFA_from_regular_expression(k);
-    ttre::util::print(nfa, k);
+    ttre::util::print_NFA(nfa, k);
 }

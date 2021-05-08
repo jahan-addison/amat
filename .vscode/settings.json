@@ -51,6 +51,7 @@
     "typeinfo": "cpp",
     "ctime": "cpp",
     "stack": "cpp",
-    "set": "cpp"
+    "set": "cpp",
+    "list": "cpp"
   }
 }

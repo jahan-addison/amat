@@ -1,5 +1,6 @@
 #include <ttre/parser.h>
 #include <ttre/nfa.h>
+#include <ttre/helpers.h>
 #include <algorithm>
 #include <array>
 #include <string_view>
@@ -88,6 +89,9 @@ namespace ttre
             case '|':
                 automata.push(construct_NFA_from_union(automata));
                 break;
+            case '*':
+                automata.push(construct_NFA_from_kleene_star(automata));
+                break;
             case '.':
                 automata.push(construct_NFA_from_concatenation(automata));
                 break;
@@ -142,10 +146,83 @@ namespace ttre
     void reevaluate_each_state_id_on_branch(NFA::Branch& branch, unsigned short* start)
     {
         std::ranges::for_each(std::next(branch.begin()), branch.end(),
-            [&start](auto& edge) {
-                edge.nodes.first.id = (*start)++;
-                edge.nodes.second.id = (*start)++;
+            [&start, &branch](Edge<State>& edge) {
+                if (edge.nodes.second.id > edge.nodes.first.id
+                    or edge.symbol != 0)
+                {
+                    edge.nodes.first.id = (*start)++;
+                    edge.nodes.second.id = (*start)++;
+
+                }
+                else
+                {
+                    auto first = *std::next(branch.begin());
+                    edge.nodes.first.id = (*start);
+                    edge.nodes.second.id = first.nodes.second.id + 1;
+                }
             });
+    }
+
+    NFA construct_NFA_from_kleene_star(Automata& automata)
+    {
+        State start_state{0, State::Type::initial};
+        State end_state{0, State::Type::accept};
+        NFA nfa{start_state};
+        if (automata.size() < 1)
+        {
+            throw std::runtime_error("could not constract NFA from kleene star operator and the stack");
+
+        }
+        NFA arg = automata.top();
+        automata.pop();
+
+        bool is_single_branch = arg.edges.size() == 1 and automata.size() >= 1;
+
+        std::ranges::for_each(arg.edges,
+            [&end_state, &is_single_branch, &automata](NFA::Branch& branch) {
+                auto front = branch.back().nodes.second;
+                front.id++;
+                auto back = is_single_branch ?
+                    automata.top().edges.front().back().nodes.first
+                    : branch.front().symbol == 0 ?
+                    (*std::next(branch.begin(), 1)).nodes.first
+                    : branch.front().nodes.first;
+                if (is_single_branch)
+                {
+                    back.id += 2;
+                }
+                Edge cyclic_edge{Epsilon,
+                    {front, back}};
+
+                branch.push_back(cyclic_edge);
+
+            });
+
+        end_state.id = arg.edges.back().back().nodes.first.id + 2;
+
+        append_end_transition_each_branch(arg, end_state);
+
+        if (automata.size() > 0)
+        {
+            NFA::Branch forward_branch = automata.top().edges.front();
+            Edge forward_edge{Epsilon, {forward_branch.back().nodes.second, end_state}};
+            forward_edge.nodes.first.id++;
+
+            forward_branch.push_back(forward_edge);
+
+            nfa.edges.push_back(forward_branch);
+        }
+        else
+        {
+            Edge forward_edge{Epsilon, {arg.edges.front().front().nodes.first, end_state}};
+
+            nfa.edges.push_back({forward_edge});
+            automata.push(arg);
+
+        }
+
+        nfa.connect_NFA(arg);
+        return nfa;
     }
 
 

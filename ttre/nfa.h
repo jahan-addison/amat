@@ -12,14 +12,12 @@ namespace ttre
     Alphabet const alphabet = {
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\x20', '}', '~',
 
         '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/',
-
         ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|',
 
     };
@@ -35,6 +33,16 @@ namespace ttre
 
         explicit State(unsigned short id_, Type type_) : id(id_), type(type_)
         {}
+
+        inline friend int operator==(State const& left, State const& right)
+        {
+            return left.type == right.type and left.id == right.id;
+        }
+
+        inline friend int operator!=(State const& left, State const& right)
+        {
+            return !(left == right);
+        }
 
         inline friend bool operator<(State const& state1, State const& state2)
         {
@@ -55,6 +63,16 @@ namespace ttre
         explicit Edge(unsigned char symbol_, std::pair<T, T>nodes_) : symbol(symbol_), nodes(nodes_)
         {}
         unsigned char symbol;
+        inline friend int operator==(Edge const& left, Edge const& right)
+        {
+            return &left == &right;
+
+        }
+        inline friend int operator!=(Edge const& left, Edge const& right)
+        {
+            return !(left == right);
+        }
+
         std::pair<T, T> nodes;
     };
 
@@ -88,5 +106,6 @@ namespace ttre
     NFA construct_NFA_from_regular_expression(std::string_view);
     NFA construct_NFA_from_character(unsigned char, unsigned short);
     NFA construct_NFA_from_concatenation(Automata&);
+    NFA construct_NFA_from_kleene_star(Automata&);
     NFA construct_NFA_from_union(Automata&);
 } // namespace ttre
