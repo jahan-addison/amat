@@ -19,26 +19,20 @@ namespace ttre
         constexpr auto content = RegExp.r;
         auto nfa = construct_NFA_from_regular_expression(content);
         auto step = epsilon_closure(nfa, nfa.start);
-        std::set<State> final{};
+
         for (auto const& c : str)
         {
+            step = epsilon_closure(nfa, step);
             step = transition(nfa, step, c);
-            final = epsilon_closure(nfa, step);
-            // for (auto const& state : step)
-            // {
-            //     std::cout << state.id << " ";
-            // }
-            std::cout << std::endl;
-            for (auto const& state : final)
+            for (auto const& state : step)
             {
                 std::cout << state.id << " ";
             }
+            std::cout << std::endl;
 
         }
 
-        std::cout << std::endl;
-
-        return std::includes(final.begin(), final.end(),
+        return std::includes(step.begin(), step.end(),
             nfa.accepted.begin(), nfa.accepted.end());
     }
 
@@ -55,7 +49,11 @@ namespace ttre
                             if (state_found == true and edge.symbol != util::Epsilon)
                             {
                                 next.insert(edge.nodes.first);
-                                //next.insert(edge.nodes.second);
+                                if (edge.nodes.second.type == State::Type::accept)
+                                {
+                                    next.insert(edge.nodes.second);
+
+                                }
                                 state_found = false;
                             }
                             if (state_found == true and edge.nodes.second.type == State::Type::accept)
@@ -72,6 +70,7 @@ namespace ttre
                 });
             return next;
         }
+
         std::set<State> epsilon_closure(NFA const& nfa, std::set<State> states)
         {
             std::set<State> next{};
@@ -92,9 +91,24 @@ namespace ttre
                         [&next, &states, &symbol, &state_found](Edge<State> const& edge) {
                             if (state_found == true)
                             {
-                                //next.insert(edge.nodes.first);
-                                next.insert(edge.nodes.second);
+                                next.insert(edge.nodes.first);
+                                if (edge.nodes.second.type == State::Type::accept
+                                    and edge.symbol == util::Epsilon)
+                                {
+                                    next.insert(edge.nodes.second);
+                                }
                                 state_found = false;
+                            }
+                            if (states.contains(edge.nodes.first)
+                                and edge.symbol == util::Epsilon)
+                            {
+                                next.insert(edge.nodes.second);
+                            }
+                            if (states.contains(edge.nodes.first)
+                                and symbol == edge.symbol
+                                and state_found == false)
+                            {
+                                next.insert(edge.nodes.second);
                             }
                             if ((states.contains(edge.nodes.first) or states.contains(edge.nodes.second))
                                 and edge.symbol == symbol)
@@ -112,10 +126,11 @@ namespace ttre
 
 int main()
 {
+    ttre::print<"(abab)*">();
+    std::cout << std::boolalpha << ttre::match<"(abab)*">("abab");
+
     // auto nfa = ttre::util::construct_NFA_from_regular_expression("a|b");
     // auto step = ttre::util::epsilon_closure(nfa, nfa.start);
     // auto states = ttre::util::transition(nfa, step, 'a');
     // ttre::util::print_NFA(nfa, "a|b");
-    ttre::print<"aaa">();
-    std::cout << std::boolalpha << ttre::match<"aaa">("aa");
 }

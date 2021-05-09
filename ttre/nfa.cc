@@ -147,7 +147,7 @@ namespace ttre
             std::ranges::for_each(std::next(branch.begin()), branch.end(),
                 [&start, &branch](Edge<State>& edge) {
                     if (edge.nodes.second.id > edge.nodes.first.id
-                        or edge.symbol != 0)
+                        or edge.symbol != Epsilon)
                     {
                         edge.nodes.first.id = (*start)++;
                         edge.nodes.second.id = (*start)++;
@@ -177,9 +177,9 @@ namespace ttre
             automata.pop();
 
             bool is_single_branch = arg.edges.size() == 1 and automata.size() >= 1;
-
+            auto cyclic_forward = 0;
             std::ranges::for_each(arg.edges,
-                [&end_state, &is_single_branch, &automata](NFA::Branch& branch) {
+                [&cyclic_forward, &end_state, &is_single_branch, &automata](NFA::Branch& branch) {
                     auto front = branch.back().nodes.second;
                     front.id++;
                     auto back = is_single_branch ?
@@ -191,6 +191,7 @@ namespace ttre
                     {
                         back.id += 2;
                     }
+                    cyclic_forward = front.id + 1;
                     Edge cyclic_edge{Epsilon,
                         {front, back}};
 
@@ -201,6 +202,8 @@ namespace ttre
             end_state.id = arg.edges.back().back().nodes.first.id + 2;
 
             append_end_transition_each_branch(arg, end_state);
+
+            arg.edges.back().back().nodes.first.id = cyclic_forward;
 
             if (automata.size() > 0)
             {
