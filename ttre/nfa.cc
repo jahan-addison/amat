@@ -9,8 +9,6 @@
 
 namespace ttre
 {
-    void reevaluate_each_state_id_on_branch(NFA::Branch& branch, unsigned short* start);
-
     void NFA::connect_edge(Input symbol, State& state, size_t location)
     {
         states.insert(state);
@@ -74,222 +72,225 @@ namespace ttre
         this->accepted = {back.nodes.second};
     }
 
-
-    NFA construct_NFA_from_regular_expression(std::string_view source)
+    namespace util
     {
-        Parser parser{source};
-        auto parsed = parser.parse();
-        State empty{0, State::Type::initial};
-        Automata automata{};
-        auto nfa = NFA{empty};
-        for (auto const& item : parsed)
+        NFA construct_NFA_from_regular_expression(std::string_view source)
         {
-            switch (item)
+            Parser parser{source};
+            auto parsed = parser.parse();
+            State empty{0, State::Type::initial};
+            Automata automata{};
+            auto nfa = NFA{empty};
+            for (auto const& item : parsed)
             {
-            case '|':
-                automata.push(construct_NFA_from_union(automata));
-                break;
-            case '*':
-                automata.push(construct_NFA_from_kleene_star(automata));
-                break;
-            case '.':
-                automata.push(construct_NFA_from_concatenation(automata));
-                break;
-            default:
-                unsigned short last_id = 0;
-                if (automata.size())
+                switch (item)
                 {
-                    last_id = automata.top().edges.back().back().nodes.second.id + 1;
+                case '|':
+                    automata.push(construct_NFA_from_union(automata));
+                    break;
+                case '*':
+                    automata.push(construct_NFA_from_kleene_star(automata));
+                    break;
+                case '.':
+                    automata.push(construct_NFA_from_concatenation(automata));
+                    break;
+                default:
+                    unsigned short last_id = 0;
+                    if (automata.size())
+                    {
+                        last_id = automata.top().edges.back().back().nodes.second.id + 1;
+                    }
+                    automata.push(construct_NFA_from_character(item, last_id));
+                    nfa.states.merge(automata.top().states);
+                    break;
                 }
-                automata.push(construct_NFA_from_character(item, last_id));
-                nfa.states.merge(automata.top().states);
-                break;
             }
+            nfa.connect_NFA(automata.top());
+            automata.pop();
+            return nfa;
         }
-        nfa.connect_NFA(automata.top());
-        automata.pop();
-        return nfa;
-    }
 
-    void prepend_start_transition_each_branch(NFA& nfa, State const& state, unsigned short* start_id)
-    {
-        auto i = 0;
-        std::ranges::for_each(nfa.edges,
-            [&state, &start_id, &i](NFA::Branch& branch)
+        void prepend_start_transition_each_branch(NFA& nfa, State const& state, unsigned short* start_id)
+        {
+            auto i = 0;
+            std::ranges::for_each(nfa.edges,
+                [&state, &start_id, &i](NFA::Branch& branch)
+                {
+                    branch.front().nodes.first.id = 1;
+                    if (i > 0)
+                    {
+                        branch.front().nodes.second.id = ++(*start_id);
+                    }
+                    Edge start_edge{Epsilon, {state, branch.front().nodes.first}};
+                    branch.push_front(start_edge);
+                    reevaluate_each_state_id_on_branch(branch, start_id);
+                    i++;
+                });
+        }
+
+
+        void append_end_transition_each_branch(NFA& nfa, State const& state)
+        {
+            nfa.accepted.insert(state);
+            std::ranges::for_each(nfa.edges,
+                [&state](NFA::Branch& branch)
+                {
+                    State prev{state};
+                    prev.id = branch.back().nodes.second.id + 1;
+                    Edge end_edge{Epsilon, {prev, state}};
+                    branch.push_back(end_edge);
+                });
+        }
+
+        void reevaluate_each_state_id_on_branch(NFA::Branch& branch, unsigned short* start)
+        {
+            std::ranges::for_each(std::next(branch.begin()), branch.end(),
+                [&start, &branch](Edge<State>& edge) {
+                    if (edge.nodes.second.id > edge.nodes.first.id
+                        or edge.symbol != 0)
+                    {
+                        edge.nodes.first.id = (*start)++;
+                        edge.nodes.second.id = (*start)++;
+
+                    }
+                    else
+                    {
+                        auto first = *std::next(branch.begin());
+                        edge.nodes.first.id = (*start);
+                        edge.nodes.second.id = first.nodes.second.id + 1;
+                    }
+                });
+        }
+
+        NFA construct_NFA_from_kleene_star(Automata& automata)
+        {
+            State start_state{0, State::Type::initial};
+            State end_state{0, State::Type::accept};
+            NFA nfa{start_state};
+            if (automata.size() < 1)
             {
-                branch.front().nodes.first.id = 1;
-                if (i > 0)
-                {
-                    branch.front().nodes.second.id = ++(*start_id);
-                }
-                Edge start_edge{Epsilon, {state, branch.front().nodes.first}};
-                branch.push_front(start_edge);
-                reevaluate_each_state_id_on_branch(branch, start_id);
-                i++;
-            });
-    }
+                throw std::runtime_error("could not constract NFA from kleene star operator and the stack");
 
+            }
 
-    void append_end_transition_each_branch(NFA& nfa, State const& state)
-    {
-        nfa.accepted.insert(state);
-        std::ranges::for_each(nfa.edges,
-            [&state](NFA::Branch& branch)
+            NFA arg = automata.top();
+            automata.pop();
+
+            bool is_single_branch = arg.edges.size() == 1 and automata.size() >= 1;
+
+            std::ranges::for_each(arg.edges,
+                [&end_state, &is_single_branch, &automata](NFA::Branch& branch) {
+                    auto front = branch.back().nodes.second;
+                    front.id++;
+                    auto back = is_single_branch ?
+                        automata.top().edges.front().back().nodes.first
+                        : branch.front().symbol == 0 ?
+                        (*std::next(branch.begin(), 1)).nodes.first
+                        : branch.front().nodes.first;
+                    if (is_single_branch)
+                    {
+                        back.id += 2;
+                    }
+                    Edge cyclic_edge{Epsilon,
+                        {front, back}};
+
+                    branch.push_back(cyclic_edge);
+
+                });
+
+            end_state.id = arg.edges.back().back().nodes.first.id + 2;
+
+            append_end_transition_each_branch(arg, end_state);
+
+            if (automata.size() > 0)
             {
-                State prev{state};
-                prev.id = branch.back().nodes.second.id + 1;
-                Edge end_edge{Epsilon, {prev, state}};
-                branch.push_back(end_edge);
-            });
-    }
+                NFA::Branch forward_branch = automata.top().edges.front();
+                Edge forward_edge{Epsilon, {forward_branch.back().nodes.second, end_state}};
+                forward_edge.nodes.first.id++;
 
-    void reevaluate_each_state_id_on_branch(NFA::Branch& branch, unsigned short* start)
-    {
-        std::ranges::for_each(std::next(branch.begin()), branch.end(),
-            [&start, &branch](Edge<State>& edge) {
-                if (edge.nodes.second.id > edge.nodes.first.id
-                    or edge.symbol != 0)
-                {
-                    edge.nodes.first.id = (*start)++;
-                    edge.nodes.second.id = (*start)++;
+                forward_branch.push_back(forward_edge);
 
-                }
-                else
-                {
-                    auto first = *std::next(branch.begin());
-                    edge.nodes.first.id = (*start);
-                    edge.nodes.second.id = first.nodes.second.id + 1;
-                }
-            });
-    }
+                nfa.edges.push_back(forward_branch);
+            }
+            else
+            {
+                Edge forward_edge{Epsilon, {arg.edges.front().front().nodes.first, end_state}};
 
-    NFA construct_NFA_from_kleene_star(Automata& automata)
-    {
-        State start_state{0, State::Type::initial};
-        State end_state{0, State::Type::accept};
-        NFA nfa{start_state};
-        if (automata.size() < 1)
-        {
-            throw std::runtime_error("could not constract NFA from kleene star operator and the stack");
+                nfa.edges.push_back({forward_edge});
+                automata.push(arg);
 
-        }
-        NFA arg = automata.top();
-        automata.pop();
+            }
 
-        bool is_single_branch = arg.edges.size() == 1 and automata.size() >= 1;
-
-        std::ranges::for_each(arg.edges,
-            [&end_state, &is_single_branch, &automata](NFA::Branch& branch) {
-                auto front = branch.back().nodes.second;
-                front.id++;
-                auto back = is_single_branch ?
-                    automata.top().edges.front().back().nodes.first
-                    : branch.front().symbol == 0 ?
-                    (*std::next(branch.begin(), 1)).nodes.first
-                    : branch.front().nodes.first;
-                if (is_single_branch)
-                {
-                    back.id += 2;
-                }
-                Edge cyclic_edge{Epsilon,
-                    {front, back}};
-
-                branch.push_back(cyclic_edge);
-
-            });
-
-        end_state.id = arg.edges.back().back().nodes.first.id + 2;
-
-        append_end_transition_each_branch(arg, end_state);
-
-        if (automata.size() > 0)
-        {
-            NFA::Branch forward_branch = automata.top().edges.front();
-            Edge forward_edge{Epsilon, {forward_branch.back().nodes.second, end_state}};
-            forward_edge.nodes.first.id++;
-
-            forward_branch.push_back(forward_edge);
-
-            nfa.edges.push_back(forward_branch);
-        }
-        else
-        {
-            Edge forward_edge{Epsilon, {arg.edges.front().front().nodes.first, end_state}};
-
-            nfa.edges.push_back({forward_edge});
-            automata.push(arg);
-
+            nfa.connect_NFA(arg);
+            return nfa;
         }
 
-        nfa.connect_NFA(arg);
-        return nfa;
-    }
 
-
-    NFA construct_NFA_from_union(Automata& automata)
-    {
-        State start_state{0, State::Type::initial};
-        State end_state{0, State::Type::accept};
-        NFA nfa{start_state};
-        if (automata.size() < 2)
+        NFA construct_NFA_from_union(Automata& automata)
         {
-            throw std::runtime_error("could not constract NFA from union operator and the stack");
+            State start_state{0, State::Type::initial};
+            State end_state{0, State::Type::accept};
+            NFA nfa{start_state};
+            if (automata.size() < 2)
+            {
+                throw std::runtime_error("could not constract NFA from union operator and the stack");
+            }
+            NFA arg1 = automata.top();
+            automata.pop();
+            NFA arg2 = automata.top();
+            automata.pop();
+
+            std::array<NFA*, 2> root_branches = {&arg2, &arg1};
+
+            unsigned short id = start_state.id + 2;
+
+            std::ranges::for_each(root_branches.begin(), root_branches.end(),
+                [&id, &start_state](NFA*& arg) {
+                    prepend_start_transition_each_branch(*arg, start_state, &id);
+                    id++;
+                });
+
+            end_state.id = id;
+
+            std::ranges::for_each(root_branches.begin(), root_branches.end(),
+                [&id, &end_state](NFA*& arg) {
+                    id++;
+                    append_end_transition_each_branch(*arg, end_state);
+                });
+
+            nfa.connect_NFA(arg2);
+            nfa.connect_NFA(arg1);
+
+            return nfa;
         }
-        NFA arg1 = automata.top();
-        automata.pop();
-        NFA arg2 = automata.top();
-        automata.pop();
 
-        std::array<NFA*, 2> root_branches = {&arg2, &arg1};
-
-        unsigned short id = start_state.id + 2;
-
-        std::ranges::for_each(root_branches.begin(), root_branches.end(),
-            [&id, &start_state](NFA*& arg) {
-                prepend_start_transition_each_branch(*arg, start_state, &id);
-                id++;
-            });
-
-        end_state.id = id;
-
-        std::ranges::for_each(root_branches.begin(), root_branches.end(),
-            [&id, &end_state](NFA*& arg) {
-                id++;
-                append_end_transition_each_branch(*arg, end_state);
-            });
-
-        nfa.connect_NFA(arg2);
-        nfa.connect_NFA(arg1);
-
-        return nfa;
-    }
-
-    NFA construct_NFA_from_concatenation(Automata& automata)
-    {
-        if (automata.size() < 2)
+        NFA construct_NFA_from_concatenation(Automata& automata)
         {
-            throw std::runtime_error("could not constract NFA from concat operator and the stack");
+            if (automata.size() < 2)
+            {
+                throw std::runtime_error("could not constract NFA from concat operator and the stack");
+            }
+            NFA arg1 = automata.top();
+            automata.pop();
+            NFA arg2 = automata.top();
+            automata.pop();
+            arg1.connect_branch(arg2.edges.front(), arg1.edges.back());
+            return arg1;
         }
-        NFA arg1 = automata.top();
-        automata.pop();
-        NFA arg2 = automata.top();
-        automata.pop();
-        arg1.connect_branch(arg2.edges.front(), arg1.edges.back());
-        return arg1;
-    }
 
-    NFA construct_NFA_from_character(unsigned char c, unsigned short start)
-    {
-        State start_state{start, State::Type::initial};
-        State end_state{++start, State::Type::accept};
-        NFA nfa{start_state};
-        if (!alphabet.contains(c))
+        NFA construct_NFA_from_character(unsigned char c, unsigned short start)
         {
-            std::cerr << "Invalid character: \"" << c << "\"" << std::endl;
-            throw std::runtime_error("operator not defined in alphabet");
+            State start_state{start, State::Type::initial};
+            State end_state{++start, State::Type::accept};
+            NFA nfa{start_state};
+            if (!alphabet.contains(c))
+            {
+                std::cerr << "Invalid character: \"" << c << "\"" << std::endl;
+                throw std::runtime_error("operator not defined in alphabet");
+            }
+            nfa.connect_edge(c, end_state, 0);
+            return nfa;
         }
-        nfa.connect_edge(c, end_state, 0);
-        return nfa;
-    }
+    } // namespace util
 
 } // namespace ttre

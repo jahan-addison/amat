@@ -8,21 +8,30 @@
 
 namespace ttre
 {
-    using Alphabet = std::set<unsigned char>;
-    Alphabet const alphabet = {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    struct NFA;
 
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\x20', '}', '~',
+    using Automata = std::stack<NFA>;
 
-        '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/',
-        ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|',
+    namespace util
+    {
+        using Alphabet = std::set<unsigned char>;
 
-    };
+        Alphabet const alphabet = {
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 
-    struct State;
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\x20', '}', '~',
+
+            '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/',
+            ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|',
+
+        };
+
+        unsigned char const Epsilon = 0;
+
+    } // namespace util
 
     struct State
     {
@@ -34,14 +43,16 @@ namespace ttre
         explicit State(unsigned short id_, Type type_) : id(id_), type(type_)
         {}
 
-        inline friend int operator==(State const& left, State const& right)
+        inline friend bool operator==(State const& left, State const& right)
         {
-            return left.type == right.type and left.id == right.id;
+            return left.type == right.type
+                and left.id == right.id
+                and left.type == right.type;
         }
 
-        inline friend int operator!=(State const& left, State const& right)
+        inline friend bool operator!=(State const& left, State const& right)
         {
-            return !(left == right);
+            return !operator==(left, right);
         }
 
         inline friend bool operator<(State const& state1, State const& state2)
@@ -54,14 +65,14 @@ namespace ttre
 
     };
 
-    unsigned char const Epsilon = 0;
-
     template <class T = State>
     struct Edge
     {
         Edge() = delete;
+
         explicit Edge(unsigned char symbol_, std::pair<T, T>nodes_) : symbol(symbol_), nodes(nodes_)
         {}
+
         unsigned char symbol;
         inline friend int operator==(Edge const& left, Edge const& right)
         {
@@ -70,14 +81,14 @@ namespace ttre
         }
         inline friend int operator!=(Edge const& left, Edge const& right)
         {
-            return !(left == right);
+            return !operator==(left, right);
         }
 
         std::pair<T, T> nodes;
     };
 
     /**
-     * NFA represented as a adjacency-list graph.
+     * NFA represented as an adjacency-list graph.
      */
     struct NFA
     {
@@ -101,11 +112,16 @@ namespace ttre
         Edges edges;
     };
 
-    using Automata = std::stack<NFA>;
+    namespace util
+    {
+        NFA construct_NFA_from_regular_expression(std::string_view);
+        NFA construct_NFA_from_character(unsigned char, unsigned short);
+        NFA construct_NFA_from_concatenation(Automata&);
+        NFA construct_NFA_from_kleene_star(Automata&);
+        NFA construct_NFA_from_union(Automata&);
 
-    NFA construct_NFA_from_regular_expression(std::string_view);
-    NFA construct_NFA_from_character(unsigned char, unsigned short);
-    NFA construct_NFA_from_concatenation(Automata&);
-    NFA construct_NFA_from_kleene_star(Automata&);
-    NFA construct_NFA_from_union(Automata&);
+        void reevaluate_each_state_id_on_branch(NFA::Branch& branch, unsigned short* start);
+
+    } // namespace util
+
 } // namespace ttre

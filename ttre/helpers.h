@@ -11,5 +11,6 @@ namespace ttre
         void print_NFA(NFA const& nfa, std::string_view expr);
         void print_branch(NFA::Branch const& branch);
         void print_edges(NFA::Edges const& edges);
-    }
+
+    } // namespace util
 } // namespace ttre
