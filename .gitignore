@@ -2,3 +2,4 @@
 *.d
 build/apps
 build/objects
+test_runner

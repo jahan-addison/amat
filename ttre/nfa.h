@@ -8,8 +8,6 @@
 #include <memory>
 #include <stack>
 
-#include <iostream>
-
 namespace ttre
 {
     struct NFA;

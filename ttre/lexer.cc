@@ -1,7 +1,6 @@
 #include <ttre/tokens.h>
 #include <ttre/lexer.h>
 #include <cctype>
-#include <optional>
 
 namespace ttre
 {

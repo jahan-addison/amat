@@ -1,6 +1,5 @@
 #include <test/catch.h>
 #include <ttre/ttre.h>
-#include <iostream>
 
 class NFA_Fixture
 {
