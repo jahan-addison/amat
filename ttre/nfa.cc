@@ -9,12 +9,12 @@
 
 namespace ttre
 {
-    void NFA::connect_edge(Input symbol, State& state, size_t location)
+    void NFA::connect_edge(Input symbol, Edge::Node& state, size_t location)
     {
-        states.insert(state);
-        if (state.type == State::Type::accept)
+        this->states.emplace(state);
+        if (state.get()->type == State::Type::accept)
         {
-            accepted.insert(state);
+            accepted.emplace(state);
         }
         if (edges.empty())
         {
@@ -26,7 +26,7 @@ namespace ttre
             if (this->edges.size() < location)
             {
                 Branch branch = this->edges[location];
-                State head = branch.back().nodes.second;
+                Edge::Node head = branch.back().nodes.second;
                 Edge edge{symbol, {head, state}};
                 branch.push_back(edge);
 
@@ -40,13 +40,13 @@ namespace ttre
         auto last = from.back();
         [[maybe_unused]] auto last_i = to.front();
 
-        first.nodes.first.type = State::Type::initial;
-        if (last.nodes.second.type == State::Type::accept)
+        first.nodes.first.get()->type = State::Type::initial;
+        if (last.nodes.second.get()->type == State::Type::accept)
         {
-            last.nodes.second.type = State::Type::normal;
+            last.nodes.second.get()->type = State::Type::normal;
         }
-        last_i.nodes.first.type = State::Type::normal;
-        last_i.nodes.second.type = State::Type::accept;
+        last_i.nodes.first.get()->type = State::Type::normal;
+        last_i.nodes.second.get()->type = State::Type::accept;
         this->start = first.nodes.first;
 
         from.splice(from.begin(), to);
@@ -60,15 +60,19 @@ namespace ttre
         auto front = this->edges.front().front();
         auto back = this->edges.back().back();
         std::ranges::for_each(nfa.edges,
-            [=, this](NFA::Branch& branch) {
+            [=, this, &back](NFA::Branch& branch) {
                 std::ranges::for_each(branch.begin(), branch.end(),
-                    [=, this](auto& edge) {
-                        states.insert(edge.nodes.first);
-                        states.insert(edge.nodes.second);
+                    [=, this, &back](auto& edge) {
+                        edge.nodes.first.get()->type = edge.nodes.second.get()->type = State::Type::normal;
+                        states.emplace(edge.nodes.first);
+                        states.emplace(edge.nodes.second);
                     });
             });
-        this->states.merge(nfa.states);
+        front.nodes.first.get()->type = State::Type::initial;
         this->start = front.nodes.first;
+        this->states.erase(std::prev(this->states.end()));
+        this->states.emplace(back.nodes.second);
+        back.nodes.second.get()->type = State::Type::accept;
         this->accepted = {back.nodes.second};
     }
 
@@ -78,7 +82,7 @@ namespace ttre
         {
             Parser parser{source};
             auto parsed = parser.parse();
-            State empty{0, State::Type::initial};
+            Edge::Node empty = std::make_shared<State>(State{0, State::Type::initial});
             Automata automata{};
             auto nfa = NFA{empty};
             for (auto const& item : parsed)
@@ -98,28 +102,28 @@ namespace ttre
                     unsigned short last_id = 0;
                     if (automata.size())
                     {
-                        last_id = automata.top().edges.back().back().nodes.second.id + 1;
+                        last_id = automata.top().edges.back().back().nodes.second.get()->id + 1;
                     }
                     automata.push(construct_NFA_from_character(item, last_id));
-                    nfa.states.merge(automata.top().states);
                     break;
                 }
             }
             nfa.connect_NFA(automata.top());
+
             automata.pop();
             return nfa;
         }
 
-        void prepend_start_transition_each_branch(NFA& nfa, State const& state, unsigned short* start_id)
+        void prepend_start_transition_each_branch(NFA& nfa, Edge::Node const& state, unsigned short* start_id)
         {
             auto i = 0;
             std::ranges::for_each(nfa.edges,
                 [&state, &start_id, &i](NFA::Branch& branch)
                 {
-                    branch.front().nodes.first.id = 1;
+                    branch.front().nodes.first.get()->id = 1;
                     if (i > 0)
                     {
-                        branch.front().nodes.second.id = ++(*start_id);
+                        branch.front().nodes.second.get()->id = ++(*start_id);
                     }
                     Edge start_edge{Epsilon, {state, branch.front().nodes.first}};
                     branch.push_front(start_edge);
@@ -129,14 +133,14 @@ namespace ttre
         }
 
 
-        void append_end_transition_each_branch(NFA& nfa, State const& state)
+        void append_end_transition_each_branch(NFA& nfa, Edge::Node const& state)
         {
-            nfa.accepted.insert(state);
+            nfa.accepted.emplace(state);
             std::ranges::for_each(nfa.edges,
                 [&state](NFA::Branch& branch)
                 {
-                    State prev{state};
-                    prev.id = branch.back().nodes.second.id + 1;
+                    Edge::Node prev = std::make_shared<State>(State{state.get()->id, state.get()->type});
+                    prev.get()->id = branch.back().nodes.second.get()->id + 1;
                     Edge end_edge{Epsilon, {prev, state}};
                     branch.push_back(end_edge);
                 });
@@ -145,27 +149,30 @@ namespace ttre
         void reevaluate_each_state_id_on_branch(NFA::Branch& branch, unsigned short* start)
         {
             std::ranges::for_each(std::next(branch.begin()), branch.end(),
-                [&start, &branch](Edge<State>& edge) {
-                    if (edge.nodes.second.id > edge.nodes.first.id
+                [&start, &branch](Edge& edge) {
+                    edge.nodes.first.get()->type = State::Type::normal;
+                    edge.nodes.second.get()->type = State::Type::normal;
+                    if (edge.nodes.second.get()->id > edge.nodes.first.get()->id
                         or edge.symbol != Epsilon)
                     {
-                        edge.nodes.first.id = (*start)++;
-                        edge.nodes.second.id = (*start)++;
+                        edge.nodes.first.get()->id = (*start)++;
+                        edge.nodes.second.get()->id = (*start)++;
 
                     }
                     else
                     {
                         auto first = *std::next(branch.begin());
-                        edge.nodes.first.id = (*start);
-                        edge.nodes.second.id = first.nodes.second.id + 1;
+                        edge.nodes.first.get()->id = (*start);
+                        edge.nodes.second.get()->id = first.nodes.second.get()->id + 1;
+
                     }
                 });
         }
 
         NFA construct_NFA_from_kleene_star(Automata& automata)
         {
-            State start_state{0, State::Type::initial};
-            State end_state{0, State::Type::accept};
+            Edge::Node start_state = std::make_shared<State>(State{0, State::Type::initial});
+            Edge::Node end_state = std::make_shared<State>(State{0, State::Type::accept});
             NFA nfa{start_state};
             if (automata.size() < 1)
             {
@@ -181,7 +188,7 @@ namespace ttre
             std::ranges::for_each(arg.edges,
                 [&cyclic_forward, &end_state, &is_single_branch, &automata](NFA::Branch& branch) {
                     auto front = branch.back().nodes.second;
-                    front.id++;
+                    front.get()->id++;
                     auto back = is_single_branch ?
                         automata.top().edges.front().back().nodes.first
                         : branch.front().symbol == 0 ?
@@ -189,9 +196,9 @@ namespace ttre
                         : branch.front().nodes.first;
                     if (is_single_branch)
                     {
-                        back.id += 2;
+                        back.get()->id += 2;
                     }
-                    cyclic_forward = front.id + 1;
+                    cyclic_forward = front.get()->id + 1;
                     Edge cyclic_edge{Epsilon,
                         {front, back}};
 
@@ -199,17 +206,17 @@ namespace ttre
 
                 });
 
-            end_state.id = arg.edges.back().back().nodes.first.id + 2;
+            end_state.get()->id = arg.edges.back().back().nodes.first.get()->id + 2;
 
             append_end_transition_each_branch(arg, end_state);
 
-            arg.edges.back().back().nodes.first.id = cyclic_forward;
+            arg.edges.back().back().nodes.first.get()->id = cyclic_forward;
 
             if (automata.size() > 0)
             {
                 NFA::Branch forward_branch = automata.top().edges.front();
                 Edge forward_edge{Epsilon, {forward_branch.back().nodes.second, end_state}};
-                forward_edge.nodes.first.id++;
+                forward_edge.nodes.first.get()->id++;
 
                 forward_branch.push_back(forward_edge);
 
@@ -231,8 +238,8 @@ namespace ttre
 
         NFA construct_NFA_from_union(Automata& automata)
         {
-            State start_state{0, State::Type::initial};
-            State end_state{0, State::Type::accept};
+            Edge::Node start_state = std::make_shared<State>(State{0, State::Type::initial});
+            Edge::Node end_state = std::make_shared<State>(State{0, State::Type::accept});
             NFA nfa{start_state};
             if (automata.size() < 2)
             {
@@ -245,7 +252,7 @@ namespace ttre
 
             std::array<NFA*, 2> root_branches = {&arg2, &arg1};
 
-            unsigned short id = start_state.id + 2;
+            unsigned short id = start_state.get()->id + 2;
 
             std::ranges::for_each(root_branches.begin(), root_branches.end(),
                 [&id, &start_state](NFA*& arg) {
@@ -253,7 +260,7 @@ namespace ttre
                     id++;
                 });
 
-            end_state.id = id;
+            end_state.get()->id = id;
 
             std::ranges::for_each(root_branches.begin(), root_branches.end(),
                 [&id, &end_state](NFA*& arg) {
@@ -283,8 +290,8 @@ namespace ttre
 
         NFA construct_NFA_from_character(unsigned char c, unsigned short start)
         {
-            State start_state{start, State::Type::initial};
-            State end_state{++start, State::Type::accept};
+            Edge::Node start_state = std::make_shared<State>(State{start, State::Type::initial});
+            Edge::Node end_state = std::make_shared<State>(State{++start, State::Type::accept});
             NFA nfa{start_state};
             if (!alphabet.contains(c))
             {

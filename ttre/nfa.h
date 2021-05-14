@@ -3,8 +3,12 @@
 #include <set>
 #include <list>
 #include <vector>
+#include <ostream>
 #include <utility>
+#include <memory>
 #include <stack>
+
+#include <iostream>
 
 namespace ttre
 {
@@ -40,14 +44,24 @@ namespace ttre
 
         enum class Type { initial, accept, normal };
 
+        friend constexpr std::ostream& operator << (std::ostream& os, Type type)
+        {
+            switch (type)
+            {
+            case State::Type::initial: return os << 0;
+            case State::Type::normal: return os << 1;
+            case State::Type::accept: return os << 2;
+            default:
+                return os << -1;
+            }
+        }
+
         explicit State(unsigned short id_, Type type_) : id(id_), type(type_)
         {}
 
         inline friend bool operator==(State const& left, State const& right)
         {
-            return left.type == right.type
-                and left.id == right.id
-                and left.type == right.type;
+            return &left == &right;
         }
 
         inline friend bool operator!=(State const& left, State const& right)
@@ -65,15 +79,15 @@ namespace ttre
 
     };
 
-    template <class T = State>
     struct Edge
     {
+        using Node = std::shared_ptr<State>;
+
         Edge() = delete;
 
-        explicit Edge(unsigned char symbol_, std::pair<T, T>nodes_) : symbol(symbol_), nodes(nodes_)
+        explicit Edge(unsigned char symbol_, std::pair<Node, Node>nodes_) : symbol(symbol_), nodes(nodes_)
         {}
 
-        unsigned char symbol;
         inline friend int operator==(Edge const& left, Edge const& right)
         {
             return &left == &right;
@@ -84,7 +98,9 @@ namespace ttre
             return !operator==(left, right);
         }
 
-        std::pair<T, T> nodes;
+        unsigned char symbol;
+
+        std::pair<Node, Node> nodes;
     };
 
     /**
@@ -93,21 +109,22 @@ namespace ttre
     struct NFA
     {
         using Input = unsigned char;
-        using Branch = std::list<Edge<State>>;
+        using Branch = std::list<Edge>;
         using Edges = std::vector<Branch>;
 
-        explicit NFA(State start_) : start(start_)
-        {
-            states.insert(start_);
-        }
+        NFA() = delete;
+        NFA(NFA const&) = default;
 
-        void connect_edge(Input symbol, State& state, size_t location);
+        explicit NFA(Edge::Node start_) : start(start_), states({start_})
+        {}
+
+        void connect_edge(Input symbol, Edge::Node& state, size_t location);
         void connect_branch(Branch& to, Branch& from);
         void connect_NFA(NFA& nfa);
 
-        State start;
-        std::set<State> states;
-        std::set<State> accepted;
+        Edge::Node start;
+        std::set<Edge::Node> states;
+        std::set<Edge::Node> accepted{};
 
         Edges edges;
     };

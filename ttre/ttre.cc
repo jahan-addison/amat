@@ -1,35 +1,26 @@
 #include <ttre/ttre.h>
-#include <iostream>
 #include <ranges>
 
 namespace ttre
 {
-    using namespace util;
-
     template<literals::Regular_Expression_String RegExp>
     void print()
     {
         constexpr auto content = RegExp.r;
-        print_NFA(construct_NFA_from_regular_expression(content), content);
+        util::print_NFA(util::construct_NFA_from_regular_expression(content), content);
     }
 
     template<literals::Regular_Expression_String RegExp>
     bool match(std::string_view str)
     {
         constexpr auto content = RegExp.r;
-        auto nfa = construct_NFA_from_regular_expression(content);
-        auto step = epsilon_closure(nfa, nfa.start);
+        auto nfa = util::construct_NFA_from_regular_expression(content);
+        auto step = util::epsilon_closure(nfa, nfa.start);
 
         for (auto const& c : str)
         {
-            step = epsilon_closure(nfa, step);
-            step = transition(nfa, step, c);
-            for (auto const& state : step)
-            {
-                std::cout << state.id << " ";
-            }
-            std::cout << std::endl;
-
+            step = util::epsilon_closure(nfa, step);
+            step = util::transition(nfa, step, c);
         }
 
         return std::includes(step.begin(), step.end(),
@@ -38,77 +29,71 @@ namespace ttre
 
     namespace util
     {
-        std::set<State> epsilon_closure(NFA const& nfa, State const& state)
+        std::set<Edge::Node> epsilon_closure(NFA const& nfa, Edge::Node const& state)
         {
-            std::set<State> next{state};
+            std::set<Edge::Node> next{};
             std::ranges::for_each(nfa.edges,
                 [&next, &state](NFA::Branch const& branch) {
                     auto state_found = false;
-                    std::ranges::for_each(branch,
-                        [&next, &state, &state_found](Edge<State> const& edge) {
-                            if (state_found == true and edge.symbol != util::Epsilon)
-                            {
-                                next.insert(edge.nodes.first);
-                                if (edge.nodes.second.type == State::Type::accept)
-                                {
-                                    next.insert(edge.nodes.second);
+                    for (auto const& edge : branch)
+                    {
+                        if (state_found == true and edge.symbol != util::Epsilon)
+                            break;
+                        if (state_found == true and edge.symbol == util::Epsilon)
+                        {
+                            next.emplace(edge.nodes.first);
+                            next.emplace(edge.nodes.first);
+                        }
+                        if (edge.nodes.first.get() == state.get() or edge.nodes.second.get() == state.get())
+                        {
+                            if (edge.nodes.first == state)
+                                next.emplace(edge.nodes.second);
+                            state_found = true;
+                        }
+                    }
 
-                                }
-                                state_found = false;
-                            }
-                            if (state_found == true and edge.nodes.second.type == State::Type::accept)
-                            {
-                                next.insert(edge.nodes.second);
-                                state_found = false;
-                            }
-                            if ((edge.nodes.first == state or edge.nodes.second == state)
-                                and edge.symbol == util::Epsilon)
-                            {
-                                state_found = true;
-                            }
-                        });
                 });
             return next;
         }
 
-        std::set<State> epsilon_closure(NFA const& nfa, std::set<State> states)
+        std::set<Edge::Node> epsilon_closure(NFA const& nfa, std::set<Edge::Node>& states)
         {
-            std::set<State> next{};
+            std::set<Edge::Node> next{};
             std::ranges::for_each(states,
-                [&nfa, &next](State const& state) {
+                [&nfa, &next](Edge::Node const& state) {
                     next.merge(epsilon_closure(nfa, state));
                 });
-            return next.empty() ? states : next;
+            return next;
         }
 
-        std::set<State> transition(NFA const& nfa, std::set<State> const& states, NFA::Input symbol)
+        std::set<Edge::Node> transition(NFA const& nfa, std::set<Edge::Node> const& states, NFA::Input symbol)
         {
-            std::set<State> next{};
+            std::set<Edge::Node> next{};
             std::ranges::for_each(nfa.edges,
                 [&next, &states, &symbol](NFA::Branch const& branch) {
                     auto state_found = false;
                     std::ranges::for_each(branch,
-                        [&next, &states, &symbol, &state_found](Edge<State> const& edge) {
+                        [&next, &states, &symbol, &state_found](Edge const& edge) {
                             if (state_found == true)
                             {
-                                next.insert(edge.nodes.first);
-                                if (edge.nodes.second.type == State::Type::accept
+                                next.emplace(edge.nodes.first);
+                                if (edge.nodes.second.get()->type == State::Type::accept
                                     and edge.symbol == util::Epsilon)
                                 {
-                                    next.insert(edge.nodes.second);
+                                    next.emplace(edge.nodes.second);
                                 }
                                 state_found = false;
                             }
                             if (states.contains(edge.nodes.first)
                                 and edge.symbol == util::Epsilon)
                             {
-                                next.insert(edge.nodes.second);
+                                next.emplace(edge.nodes.second);
                             }
                             if (states.contains(edge.nodes.first)
                                 and symbol == edge.symbol
                                 and state_found == false)
                             {
-                                next.insert(edge.nodes.second);
+                                next.emplace(edge.nodes.second);
                             }
                             if ((states.contains(edge.nodes.first) or states.contains(edge.nodes.second))
                                 and edge.symbol == symbol)
@@ -124,13 +109,8 @@ namespace ttre
 
 } // namespace ttre
 
-int main()
-{
-    ttre::print<"(abab)*">();
-    std::cout << std::boolalpha << ttre::match<"(abab)*">("abab");
-
-    // auto nfa = ttre::util::construct_NFA_from_regular_expression("a|b");
-    // auto step = ttre::util::epsilon_closure(nfa, nfa.start);
-    // auto states = ttre::util::transition(nfa, step, 'a');
-    // ttre::util::print_NFA(nfa, "a|b");
-}
+// int main()
+// {
+//     ttre::print<"(abab)*">();
+//     std::cout << std::boolalpha << ttre::match<"(abab)*">("abab");
+// }

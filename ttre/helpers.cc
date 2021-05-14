@@ -18,7 +18,7 @@ namespace ttre
         {
             for (auto const& edge : branch)
             {
-                std::cout << edge.nodes.first.id << " " << to_state_symbol(edge.symbol) << " " << edge.nodes.second.id;
+                std::cout << edge.nodes.first.get()->id << " " << to_state_symbol(edge.symbol) << " " << edge.nodes.second.get()->id;
                 if (edge != branch.back())
                 {
                     std::cout << "  ->  ";
@@ -41,8 +41,8 @@ namespace ttre
             std::cout << "Regular Expression: " << std::quoted(expr) << std::endl;
             std::cout << "<<NFA>>" << std::endl;
             std::cout << "States: " << nfa.states.size() << std::endl;
-            std::cout << "Initial state: " << nfa.start.id << std::endl;
-            std::cout << "Final state: " << nfa.edges.back().back().nodes.second.id << std::endl;
+            std::cout << "Initial state: " << nfa.start.get()->id << std::endl;
+            std::cout << "Final state: " << nfa.edges.back().back().nodes.second.get()->id << std::endl;
             std::cout << "Branches: " << nfa.edges.size() << std::endl;
             print_edges(edges);
         }

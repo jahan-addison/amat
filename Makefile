@@ -3,17 +3,29 @@ CXXFLAGS := -pedantic-errors --std=c++2a -Wall -Wextra -Werror
 LDFLAGS  := -L/usr/lib -lstdc++ -lm
 BUILD    := ./build
 APP_DIR  := $(BUILD)/apps
+TEST_DIR := ./test
 OBJ_DIR  := $(BUILD)/objects
 TARGET   := program
 INCLUDE  := -I.
-SRC      :=                       \
+SRC      :=                   \
 	 $(wildcard ttre/*.cc)      \
+
+TEST      :=                  \
+	 $(wildcard test/*.cc)      \
 
 OBJECTS  := $(SRC:%.cc=$(OBJ_DIR)/%.o)
 DEPENDENCIES \
 				 := $(OBJECTS:.o=.d)
 
+TESTS  := $(TEST:%.cc=$(OBJ_DIR)/%.o)
+DEPENDENCIES \
+				 := $(TESTS:.o=.d)
+
+
 all: build $(APP_DIR)/$(TARGET)
+
+test: build $(TEST_DIR)/$(TARGET)
+	./test/test_runner
 
 $(OBJ_DIR)/%.o: %.cc
 	 @mkdir -p $(@D)
@@ -23,9 +35,14 @@ $(APP_DIR)/$(TARGET): $(OBJECTS)
 	 @mkdir -p $(@D)
 	 $(CXX) $(CXXFLAGS) -o $(APP_DIR)/$(TARGET) $^ $(LDFLAGS)
 
+$(TEST_DIR)/$(TARGET): $(OBJECTS) $(TESTS)
+	 @mkdir -p $(@D)
+	 $(CXX) $(CXXFLAGS) -o $(TEST_DIR)/test_runner $^ $(LDFLAGS)
+
+
 -include $(DEPENDENCIES)
 
-.PHONY: all build clean debug release info
+.PHONY: all build clean debug release info test
 
 build:
 	 @mkdir -p $(APP_DIR)

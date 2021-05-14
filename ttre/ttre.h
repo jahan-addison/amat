@@ -46,10 +46,10 @@ namespace ttre
          * Utility functions to simulate an NFA by on-the-fly subset construction on ttre::NFA.
          */
 
-        std::set<State> epsilon_closure(NFA const& nfa, State const& state);
-        std::set<State> epsilon_closure(NFA const& nfa, std::set<State> states);
+        std::set<Edge::Node> epsilon_closure(NFA const& nfa, Edge::Node const& state);
+        std::set<Edge::Node> epsilon_closure(NFA const& nfa, std::set<Edge::Node>& states);
 
-        std::set<State> transition(NFA const& nfa, std::set<State> const& states, NFA::Input symbol);
+        std::set<Edge::Node> transition(NFA const& nfa, std::set<Edge::Node> const& states, NFA::Input symbol);
 
     } // namespace util
 

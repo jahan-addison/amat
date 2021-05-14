@@ -53,6 +53,7 @@
     "stack": "cpp",
     "set": "cpp",
     "list": "cpp",
-    "forward_list": "cpp"
+    "forward_list": "cpp",
+    "thread": "cpp"
   }
 }
