@@ -1,11 +1,37 @@
 ttre
 ====
 
-This is a small implementation of Regular Expressions by way of Thompson's Construction (Thompson NFA), or the McNaughton-Yamada-Thompson's algorithm.
+This is a Regular Expression engine by way of Thompson's Construction, or the McNaughton-Yamada-Thompson's algorithm (`grep` flavor). The library is compiled to a single-header library for convenience.
 
-I use Subset Construction to convert the NFA to more efficient DFA.
+# Details
 
-I plan to support Union, Kleene-star, and Concatenation operators.
+## Library code
 
+### Library Functions
+
+...
+
+## Utility Functions
+
+...
+
+### Supported operators
+
+* concatenation
+* union operator
+* kleene star
+
+### Usage
+
+...
+
+## Build
+
+> `make all`
+
+
+# Tests
+
+> `make test`
 
 
