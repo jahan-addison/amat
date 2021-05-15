@@ -21,16 +21,16 @@ This is a Regular Expression engine by way of Thompson's Construction, or the Mc
 * union operator
 * kleene star
 
-### Usage
+## Usage
 
 ...
 
-## Build
+### Build
 
 > `make all`
 
 
-## Tests
+### Tests
 
 > `make test`
 
