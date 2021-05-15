@@ -11,7 +11,7 @@ This is a Regular Expression engine by way of Thompson's Construction, or the Mc
 
 ...
 
-## Utility Functions
+### Utility Functions
 
 ...
 
