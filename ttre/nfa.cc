@@ -1,10 +1,12 @@
 #include <ttre/parser.h>
 #include <ttre/nfa.h>
 #include <ttre/helpers.h>
+
 #include <algorithm>
 #include <array>
-#include <string_view>
 #include <iostream>
+#include <optional>
+#include <string_view>
 #include <stdexcept>
 
 namespace ttre
@@ -12,10 +14,6 @@ namespace ttre
     void NFA::connect_edge(Input symbol, Edge::Node& state, size_t location)
     {
         this->states.emplace(state);
-        if (state.get()->type == State::Type::accept)
-        {
-            accepted.emplace(state);
-        }
         if (edges.empty())
         {
             Edge edge{symbol, {this->start, state}};
@@ -47,6 +45,7 @@ namespace ttre
         }
         last_i.nodes.first.get()->type = State::Type::normal;
         last_i.nodes.second.get()->type = State::Type::accept;
+
         this->start = first.nodes.first;
 
         from.splice(from.begin(), to);
@@ -60,18 +59,18 @@ namespace ttre
         auto front = this->edges.front().front();
         auto back = this->edges.back().back();
         std::ranges::for_each(nfa.edges,
-            [=, this, &back](NFA::Branch& branch) {
+            [=, this, &front, &back](NFA::Branch& branch) {
                 std::ranges::for_each(branch.begin(), branch.end(),
-                    [=, this, &back](auto& edge) {
+                    [=, this, &front, &back](auto& edge) {
                         edge.nodes.first.get()->type = edge.nodes.second.get()->type = State::Type::normal;
-                        states.emplace(edge.nodes.first);
-                        states.emplace(edge.nodes.second);
+                        if (front.nodes.first != edge.nodes.first)
+                            states.emplace(edge.nodes.first);
+                        if (front.nodes.first != edge.nodes.second)
+                            states.emplace(edge.nodes.second);
                     });
             });
         front.nodes.first.get()->type = State::Type::initial;
         this->start = front.nodes.first;
-        this->states.erase(std::prev(this->states.end()));
-        this->states.emplace(back.nodes.second);
         back.nodes.second.get()->type = State::Type::accept;
         this->accepted = {back.nodes.second};
     }
@@ -172,66 +171,65 @@ namespace ttre
         NFA construct_NFA_from_kleene_star(Automata& automata)
         {
             Edge::Node start_state = std::make_shared<State>(State{0, State::Type::initial});
-            Edge::Node end_state = std::make_shared<State>(State{0, State::Type::accept});
+            Edge::Node end_state = std::make_shared<State>(State{1, State::Type::accept});
             NFA nfa{start_state};
             if (automata.size() < 1)
             {
                 throw std::runtime_error("could not constract NFA from kleene star operator and the stack");
-
             }
 
             NFA arg = automata.top();
+            std::optional<NFA> arg2 = std::nullopt;
+
             automata.pop();
 
-            bool is_single_branch = arg.edges.size() == 1 and automata.size() >= 1;
-            auto cyclic_forward = 0;
+            if (automata.size() >= 1)
+            {
+                arg2 = std::make_optional<NFA>(automata.top());
+            }
+            else
+            {
+                auto forward = arg.edges.back().front().nodes.first;
+                Edge forward_edge{Epsilon, {
+                    arg.edges.back().front().nodes.first,
+                    arg.edges.back().back().nodes.first}
+                };
+                arg.edges.back().push_front(forward_edge);
+            }
+
+            auto last_edge = arg.edges.back().back();
+
             std::ranges::for_each(arg.edges,
-                [&cyclic_forward, &end_state, &is_single_branch, &automata](NFA::Branch& branch) {
-                    auto front = branch.back().nodes.second;
-                    front.get()->id++;
-                    auto back = is_single_branch ?
-                        automata.top().edges.front().back().nodes.first
-                        : branch.front().symbol == 0 ?
-                        (*std::next(branch.begin(), 1)).nodes.first
-                        : branch.front().nodes.first;
-                    if (is_single_branch)
-                    {
-                        back.get()->id += 2;
-                    }
-                    cyclic_forward = front.get()->id + 1;
+                [&arg2, &automata](NFA::Branch& branch) {
+                    auto back = arg2.has_value() ?
+                        arg2.value().edges.back().front().nodes.first :
+                        branch.front().nodes.first;
+                    auto front = arg2.has_value() ?
+                        arg2.value().edges.back().back().nodes.second :
+                        branch.back().nodes.second;
+
+                    Edge cyclic_forward_edge{Epsilon, {back, branch.back().nodes.first}};
+
                     Edge cyclic_edge{Epsilon,
                         {front, back}};
 
-                    branch.push_back(cyclic_edge);
-
+                    if (arg2.has_value())
+                    {
+                        auto back = arg2.value().edges.back();
+                        back.push_front(cyclic_forward_edge);
+                        back.push_back(cyclic_edge);
+                        branch.splice(branch.begin(), back);
+                    }
+                    else
+                    {
+                        branch.insert(std::prev(branch.end(), 1), cyclic_edge);
+                    }
                 });
 
             end_state.get()->id = arg.edges.back().back().nodes.first.get()->id + 2;
 
-            append_end_transition_each_branch(arg, end_state);
-
-            arg.edges.back().back().nodes.first.get()->id = cyclic_forward;
-
-            if (automata.size() > 0)
-            {
-                NFA::Branch forward_branch = automata.top().edges.front();
-                Edge forward_edge{Epsilon, {forward_branch.back().nodes.second, end_state}};
-                forward_edge.nodes.first.get()->id++;
-
-                forward_branch.push_back(forward_edge);
-
-                nfa.edges.push_back(forward_branch);
-            }
-            else
-            {
-                Edge forward_edge{Epsilon, {arg.edges.front().front().nodes.first, end_state}};
-
-                nfa.edges.push_back({forward_edge});
-                automata.push(arg);
-
-            }
-
             nfa.connect_NFA(arg);
+
             return nfa;
         }
 

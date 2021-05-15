@@ -54,6 +54,8 @@
     "set": "cpp",
     "list": "cpp",
     "forward_list": "cpp",
-    "thread": "cpp"
+    "thread": "cpp",
+    "future": "cpp",
+    "variant": "cpp"
   }
 }

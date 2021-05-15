@@ -59,7 +59,8 @@ namespace ttre
 
         inline friend bool operator==(State const& left, State const& right)
         {
-            return &left == &right;
+            return &left == &right
+                and left.id == right.id;
         }
 
         inline friend bool operator!=(State const& left, State const& right)
@@ -89,7 +90,6 @@ namespace ttre
         inline friend int operator==(Edge const& left, Edge const& right)
         {
             return &left == &right;
-
         }
         inline friend int operator!=(Edge const& left, Edge const& right)
         {
@@ -110,18 +110,18 @@ namespace ttre
         using Branch = std::list<Edge>;
         using Edges = std::vector<Branch>;
 
-        NFA() = delete;
         NFA(NFA const&) = default;
 
-        explicit NFA(Edge::Node start_) : start(start_), states({start_})
-        {}
-
+        explicit NFA(Edge::Node start_) : start(start_)
+        {
+            states.emplace(start_);
+        }
         void connect_edge(Input symbol, Edge::Node& state, size_t location);
         void connect_branch(Branch& to, Branch& from);
         void connect_NFA(NFA& nfa);
 
         Edge::Node start;
-        std::set<Edge::Node> states;
+        std::set<Edge::Node> states{};
         std::set<Edge::Node> accepted{};
 
         Edges edges;

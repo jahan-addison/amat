@@ -1,6 +1,8 @@
 #include <ttre/ttre.h>
 #include <ranges>
 
+#include <iostream>
+
 namespace ttre
 {
     template<literals::Regular_Expression_String RegExp>
@@ -38,20 +40,21 @@ namespace ttre
                     for (auto const& edge : branch)
                     {
                         if (state_found == true and edge.symbol != util::Epsilon)
-                            break;
+                            continue;
                         if (state_found == true and edge.symbol == util::Epsilon)
                         {
-                            next.emplace(edge.nodes.first);
-                            next.emplace(edge.nodes.first);
+                            if (edge.nodes.first.get()->id < edge.nodes.second.get()->id)
+                                next.emplace(edge.nodes.first);
+                            if (edge.nodes.second != state)
+                                next.emplace(edge.nodes.second);
                         }
-                        if (edge.nodes.first.get() == state.get() or edge.nodes.second.get() == state.get())
+                        if (edge.nodes.first == state or edge.nodes.second == state)
                         {
-                            if (edge.nodes.first == state)
+                            if (edge.nodes.first == state and edge.symbol == util::Epsilon)
                                 next.emplace(edge.nodes.second);
                             state_found = true;
                         }
                     }
-
                 });
             return next;
         }
