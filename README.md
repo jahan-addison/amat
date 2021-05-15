@@ -30,7 +30,7 @@ This is a Regular Expression engine by way of Thompson's Construction, or the Mc
 > `make all`
 
 
-# Tests
+## Tests
 
 > `make test`
 
