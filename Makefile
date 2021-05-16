@@ -22,10 +22,11 @@ DEPENDENCIES \
 				 := $(TESTS:.o=.d)
 
 
-all: build $(APP_DIR)/$(TARGET)
+all: clean build $(APP_DIR)/$(TARGET)
 
 test: build $(TEST_DIR)/$(TARGET)
 	./test/test_runner 
+	@rm -f ./test/test_runner
 
 $(OBJ_DIR)/%.o: %.cc
 	 @mkdir -p $(@D)
