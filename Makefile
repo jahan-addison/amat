@@ -25,7 +25,7 @@ DEPENDENCIES \
 all: build $(APP_DIR)/$(TARGET)
 
 test: build $(TEST_DIR)/$(TARGET)
-	./test/test_runner
+	./test/test_runner 
 
 $(OBJ_DIR)/%.o: %.cc
 	 @mkdir -p $(@D)

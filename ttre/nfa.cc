@@ -156,12 +156,11 @@ namespace ttre
                     {
                         edge.nodes.first.get()->id = (*start)++;
                         edge.nodes.second.get()->id = (*start)++;
-
                     }
                     else
                     {
                         auto first = *std::next(branch.begin());
-                        edge.nodes.first.get()->id = (*start);
+                        edge.nodes.first.get()->id = *start;
                         edge.nodes.second.get()->id = first.nodes.second.get()->id + 1;
 
                     }
@@ -192,7 +191,7 @@ namespace ttre
                 auto forward = arg.edges.back().front().nodes.first;
                 Edge forward_edge{Epsilon, {
                     arg.edges.back().front().nodes.first,
-                    arg.edges.back().back().nodes.first}
+                    arg.edges.back().back().nodes.second}
                 };
                 arg.edges.back().push_front(forward_edge);
             }
@@ -200,7 +199,7 @@ namespace ttre
             auto last_edge = arg.edges.back().back();
 
             std::ranges::for_each(arg.edges,
-                [&arg2, &automata](NFA::Branch& branch) {
+                [&arg, &arg2, &automata](NFA::Branch& branch) {
                     auto back = arg2.has_value() ?
                         arg2.value().edges.back().front().nodes.first :
                         branch.front().nodes.first;
@@ -222,11 +221,14 @@ namespace ttre
                     }
                     else
                     {
-                        branch.insert(std::prev(branch.end(), 1), cyclic_edge);
+                        branch.push_back(cyclic_edge);
                     }
                 });
 
             end_state.get()->id = arg.edges.back().back().nodes.first.get()->id + 2;
+
+            if (automata.empty())
+                append_end_transition_each_branch(arg, end_state);
 
             nfa.connect_NFA(arg);
 

@@ -68,6 +68,8 @@ namespace ttre
             return !operator==(left, right);
         }
 
+        auto operator<=>(State const&) const = default;
+
         inline friend bool operator<(State const& state1, State const& state2)
         {
             return state1.id < state2.id;
@@ -121,6 +123,7 @@ namespace ttre
         void connect_NFA(NFA& nfa);
 
         Edge::Node start;
+
         std::set<Edge::Node> states{};
         std::set<Edge::Node> accepted{};
 

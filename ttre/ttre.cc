@@ -40,7 +40,8 @@ namespace ttre
                     for (auto const& edge : branch)
                     {
                         if (state_found == true and edge.symbol != util::Epsilon)
-                            continue;
+                            state_found = false;
+
                         if (state_found == true and edge.symbol == util::Epsilon)
                         {
                             if (edge.nodes.first.get()->id < edge.nodes.second.get()->id)

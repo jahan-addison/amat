@@ -1,6 +1,8 @@
 #include <test/catch.h>
 #include <ttre/ttre.h>
 
+#include <algorithm>
+#include <set>
 #include <iostream>
 
 using namespace ttre;
@@ -12,6 +14,16 @@ struct NFA_Fixture
     explicit NFA_Fixture(std::string_view str) : nfa(util::construct_NFA_from_regular_expression(str))
     {};
 };
+
+void assert_state_exists_by_id(std::set<Edge::Node> const& items, unsigned short id)
+{
+    auto search = std::ranges::find_if(items.begin(), items.end(),
+        [&id](Edge::Node const& search) -> bool {
+            return search->id == id;
+        });
+
+    REQUIRE(search != items.end());
+}
 
 void log_all_NFA_states(NFA const& nfa)
 {
@@ -37,43 +49,70 @@ TEST_CASE("ttre::util::epsilon_closure : overload 1 : kleene star case 1")
 
     auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
 
-    // util::print_NFA(fixture_1.nfa, "a*bb");
-
-    // log_all_NFA_states(fixture_1.nfa);
-    // log_all_NFA_states(test);
-
-    auto iterator_test = test.begin();
-    auto iterator_expect = fixture_1.nfa.states.begin();
-
     CHECK(test.size() == 1);
 
-    std::advance(iterator_expect, 4);
+    assert_state_exists_by_id(test, 2);
 
-    CHECK(iterator_test->get() == iterator_expect->get());
+    test = util::epsilon_closure(fixture_1.nfa, *test.begin());
+
+    CHECK(test.size() == 0);
 
 }
 
 TEST_CASE("ttre::util::epsilon_closure : overload 1 : kleene star case 2")
 {
     auto fixture_1 = NFA_Fixture("a*");
-    // auto fixture_3 = NFA_Fixture("a");
-    // auto fixture_4 = NFA_Fixture("a|b");
-    // auto fixture_5 = NFA_Fixture("aaa");
 
     auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
 
-    // util::print_NFA(fixture_1.nfa, "a*");
-    // log_all_NFA_states(fixture_1.nfa);
-    // log_all_NFA_states(test);
+    CHECK(test.size() == 3);
 
-    // auto iterator_test = test.begin();
-    // auto iterator_expect = fixture_1.nfa.states.begin();
-
-    // CHECK(iterator_test->get() == iterator_expect->get());
-
-    // std::advance(iterator_test, 1);
-    // std::advance(iterator_expect, 1);
-
-    // CHECK(iterator_test->get() == iterator_expect->get());
-
+    assert_state_exists_by_id(test, 3);
+    assert_state_exists_by_id(test, 1);
+    assert_state_exists_by_id(test, 1);
 }
+
+
+TEST_CASE("ttre::util::epsilon_closure : overload 1 : character case")
+{
+    auto fixture_1 = NFA_Fixture("a");
+
+    auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
+
+    CHECK(test.size() == 0);
+}
+
+TEST_CASE("ttre::util::epsilon_closure : overload 1 : union case 1")
+{
+    auto fixture_1 = NFA_Fixture("a|b");
+
+    auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
+
+    CHECK(test.size() == 2);
+
+    assert_state_exists_by_id(test, 5);
+    assert_state_exists_by_id(test, 2);
+}
+
+TEST_CASE("ttre::util::epsilon_closure : overload 1 : union case 2")
+{
+    auto fixture_1 = NFA_Fixture("a*|b");
+
+    auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
+
+    CHECK(test.size() == 3);
+
+    assert_state_exists_by_id(test, 4);
+    assert_state_exists_by_id(test, 7);
+    assert_state_exists_by_id(test, 5);
+}
+
+TEST_CASE("ttre::util::epsilon_closure : overload 1 : concatenation case")
+{
+    auto fixture_1 = NFA_Fixture("aaa");
+
+    auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
+
+    CHECK(test.size() == 0);
+}
+
