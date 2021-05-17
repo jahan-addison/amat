@@ -25,6 +25,24 @@ namespace ttre
                 }
             }
         }
+        void print_states(NFA const& nfa)
+        {
+            std::cout << "States: " << std::endl;
+            for (auto const& state : nfa.states)
+            {
+                std::cout << "State: " << state.get()->id << " " << state.get()->type << std::endl;
+            }
+        }
+
+        void print_states(std::set<Edge::Node> const& states)
+        {
+            std::cout << "States: " << std::endl;
+            for (auto const& state : states)
+            {
+                std::cout << "State: " << state.get()->id << " " << state.get()->type << std::endl;
+            }
+        }
+
         void print_edges(NFA::Edges const& edges)
         {
             for (auto const& branch : edges)

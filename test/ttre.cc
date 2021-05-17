@@ -26,24 +26,6 @@ Edge::Node assert_and_get_state_exists_by_id(std::set<Edge::Node> const& items, 
     return *search;
 }
 
-void log_all_NFA_states(NFA const& nfa)
-{
-    std::cout << "States: " << std::endl;
-    for (auto const& state : nfa.states)
-    {
-        std::cout << "State: " << state.get()->id << " " << state.get()->type << std::endl;
-    }
-}
-
-void log_all_NFA_states(std::set<Edge::Node> const& states)
-{
-    std::cout << "States: " << std::endl;
-    for (auto const& state : states)
-    {
-        std::cout << "State: " << state.get()->id << " " << state.get()->type << std::endl;
-    }
-}
-
 TEST_CASE("ttre::util::epsilon_closure : overload 1 : kleene star case 1")
 {
     auto fixture_1 = NFA_Fixture("a*bb");
@@ -56,7 +38,7 @@ TEST_CASE("ttre::util::epsilon_closure : overload 1 : kleene star case 1")
 
     test = util::epsilon_closure(fixture_1.nfa, *test.begin());
 
-    CHECK(test.size() == 0);
+    CHECK(test.size() == 1);
 
 }
 
@@ -80,7 +62,7 @@ TEST_CASE("ttre::util::epsilon_closure : overload 1 : character case")
 
     auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
 
-    CHECK(test.size() == 0);
+    CHECK(test.size() == 1);
 }
 
 TEST_CASE("ttre::util::epsilon_closure : overload 1 : union case 1")
@@ -114,7 +96,7 @@ TEST_CASE("ttre::util::epsilon_closure : overload 1 : concatenation case")
 
     auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
 
-    CHECK(test.size() == 0);
+    CHECK(test.size() == 1);
 }
 
 
@@ -129,7 +111,7 @@ TEST_CASE("ttre::util::epsilon_closure : overload 2 : case 1")
 
     auto test = util::epsilon_closure(fixture_1.nfa, states);
 
-    CHECK(test.size() == 1);
+    CHECK(test.size() == 2);
 
     assert_and_get_state_exists_by_id(test, 0);
 
@@ -153,5 +135,24 @@ TEST_CASE("ttre::util::epsilon_closure : overload 2 : case 2")
     assert_and_get_state_exists_by_id(fixture_1.nfa.states, 4);
     assert_and_get_state_exists_by_id(fixture_1.nfa.states, 7);
     assert_and_get_state_exists_by_id(fixture_1.nfa.states, 5);
-    assert_and_get_state_exists_by_id(fixture_1.nfa.states, 7);
+}
+
+
+TEST_CASE("ttre::util::transition : kleene star case 1")
+{
+    auto fixture_1 = NFA_Fixture("a*bb");
+
+    auto states = util::transition(fixture_1.nfa, {fixture_1.nfa.start}, 'a');
+
+    CHECK(states.size() == 2);
+    assert_and_get_state_exists_by_id(states, 1);
+    assert_and_get_state_exists_by_id(states, 0);
+
+    states = util::transition(fixture_1.nfa, fixture_1.nfa.states, 'b');
+
+    CHECK(states.size() == 2);
+
+    assert_and_get_state_exists_by_id(states, 5);
+    assert_and_get_state_exists_by_id(states, 4);
+
 }

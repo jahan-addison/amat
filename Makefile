@@ -22,7 +22,7 @@ DEPENDENCIES \
 				 := $(TESTS:.o=.d)
 
 
-all: clean build $(APP_DIR)/$(TARGET)
+all: build $(APP_DIR)/$(TARGET)
 
 test: build $(TEST_DIR)/$(TARGET)
 	./test/test_runner 
