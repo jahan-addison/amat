@@ -1,32 +1,8 @@
 #include <ttre/ttre.h>
 #include <ranges>
 
-#include <iostream>
-
 namespace ttre
 {
-    template<literals::Regular_Expression_String RegExp>
-    void print()
-    {
-        constexpr auto content = RegExp.r;
-        util::print_NFA(util::construct_NFA_from_regular_expression(content), content);
-    }
-
-    template<literals::Regular_Expression_String RegExp>
-    bool match(std::string_view str)
-    {
-        constexpr auto content = RegExp.r;
-        auto nfa = util::construct_NFA_from_regular_expression(content);
-        auto step = util::epsilon_closure(nfa, nfa.start);
-
-        for (auto const& c : str)
-        {
-            auto move = util::transition(nfa, step, c);
-            step = util::epsilon_closure(nfa, move);
-        }
-        return std::ranges::equal(step, nfa.accepted);
-    }
-
     namespace util
     {
         std::set<Edge::Node> epsilon_closure(NFA const& nfa, Edge::Node const& state)
@@ -80,7 +56,8 @@ namespace ttre
                 {
                     if (state_found == true)
                     {
-                        next.emplace(edge.nodes.first);
+                        if (edge.nodes.second->type != State::Type::accept)
+                            next.emplace(edge.nodes.first);
                         next.emplace(edge.nodes.second);
                         state_found = false;
                     }
@@ -99,9 +76,3 @@ namespace ttre
     } // namespace util
 
 } // namespace ttre
-
-// int main()
-// {
-//     ttre::print<"(ab)|cde">();
-//     std::cout << std::boolalpha << ttre::match<"(ab)|cde">("ab");
-// }

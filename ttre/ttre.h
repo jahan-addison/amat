@@ -59,9 +59,26 @@ namespace ttre
     ///////////////////////////////
 
     template<literals::Regular_Expression_String RegExp>
-    bool match(std::string_view str);
+    void print()
+    {
+        constexpr auto content = RegExp.r;
+        util::print_NFA(util::construct_NFA_from_regular_expression(content), content);
+    }
 
     template<literals::Regular_Expression_String RegExp>
-    void print();
+    bool match(std::string_view str)
+    {
+        constexpr auto content = RegExp.r;
+        auto nfa = util::construct_NFA_from_regular_expression(content);
+        auto step = util::epsilon_closure(nfa, nfa.start);
+
+        for (auto const& c : str)
+        {
+            step = util::transition(nfa, step, c);
+            step.merge(util::epsilon_closure(nfa, step));
+        }
+        util::print_states(step);
+        return std::ranges::equal(step, nfa.accepted);
+    }
 
 } // namespace ttre

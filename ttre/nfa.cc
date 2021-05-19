@@ -199,25 +199,40 @@ namespace ttre
             auto last_edge = arg.edges.back().back();
 
             std::ranges::for_each(arg.edges,
-                [&arg, &arg2, &automata](NFA::Branch& branch) {
+                [&arg, &arg2, &end_state, &automata](NFA::Branch& branch) {
                     auto back = arg2.has_value() ?
-                        arg2.value().edges.back().front().nodes.first :
+                        arg2.value().edges.back().back().nodes.second :
                         branch.front().nodes.first;
                     auto front = arg2.has_value() ?
                         arg2.value().edges.back().back().nodes.second :
                         branch.back().nodes.second;
 
-                    Edge cyclic_forward_edge{Epsilon, {back, branch.back().nodes.first}};
+                    Edge cyclic_forward_edge{Epsilon, {back, end_state}};
 
                     Edge cyclic_edge{Epsilon,
                         {front, back}};
 
                     if (arg2.has_value())
                     {
-                        auto back = arg2.value().edges.back();
-                        back.push_front(cyclic_forward_edge);
-                        back.push_back(cyclic_edge);
-                        branch.splice(branch.begin(), back);
+                        if (arg2->edges.back().size() == 1)
+                        {
+                            auto back = arg2.value().edges.back();
+                            cyclic_forward_edge.nodes.first->id = 0;
+                            back.back().nodes.first->id = branch.front().nodes.first->id - 1;
+                            back.back().nodes.second = branch.back().nodes.first;
+                            cyclic_edge.nodes.first = back.back().nodes.second;
+                            back.push_front(cyclic_forward_edge);
+                            back.push_back(cyclic_edge);
+                            branch.splice(branch.begin(), back);
+                        }
+                        else
+                        {
+                            auto head = branch.begin();
+                            cyclic_edge.nodes.first = head->nodes.second;
+                            branch.insert(branch.begin(), cyclic_forward_edge);
+                            std::advance(head, 1);
+                            branch.insert(head, cyclic_edge);
+                        }
                     }
                     else
                     {
