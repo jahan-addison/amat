@@ -5,8 +5,6 @@ This is a Regular Expression engine by way of Thompson's Construction, or the Mc
 
 # Details
 
-## Library code
-
 ## Usage
 
 The library makes [use of the new C++20 literal classes as Non-Type template parameters](https://ctrpeach.io/posts/cpp20-class-as-non-type-template-param/), and provides a type-safe regular expression literal and functions that accept the literal type at compile-time.
