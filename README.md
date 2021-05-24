@@ -1,7 +1,7 @@
 ttre
 ====
 
-This is a Regular Expression engine by way of Thompson's Construction, or the McNaughton-Yamada-Thompson's algorithm (`grep` flavor). The library is compiled to a single-header library for convenience.
+This is a Regular Expression engine by way of Thompson's Construction, or the McNaughton-Yamada-Thompson's algorithm (`grep` flavor). I plan to provide the library as a compiled single-header for convenience.
 
 # Details
 
