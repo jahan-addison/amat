@@ -167,6 +167,44 @@ namespace ttre
                 });
         }
 
+        void connect_kleene_edge_on_single_branch(Automata& automata,
+            Edge::Node& start_state,
+            Edge& cyclic_forward_edge,
+            Edge& cyclic_edge,
+            NFA::Branch& back,
+            NFA::Branch& forward
+        )
+        {
+            if (automata.size() >= 1)
+                cyclic_forward_edge.nodes.first = automata.top().edges.back().back().nodes.second;
+            else
+            {
+                cyclic_forward_edge.nodes.first = start_state;
+                back.back().nodes.first->id++;
+            }
+            cyclic_forward_edge.nodes.second = forward.front().nodes.first;
+            back.back().nodes.second = forward.back().nodes.first;
+            cyclic_edge.nodes.first = back.back().nodes.second;
+            cyclic_edge.nodes.second = cyclic_forward_edge.nodes.first;
+            back.push_front(cyclic_forward_edge);
+            back.push_back(cyclic_edge);
+            forward.splice(forward.begin(), back);
+        }
+
+        void connect_kleene_edge_multiple_branches(NFA& nfa,
+            Edge& cyclic_forward_edge,
+            Edge& cyclic_edge,
+            NFA::Branch& back,
+            NFA::Branch& forward)
+        {
+            cyclic_forward_edge.nodes.first = back.back().nodes.second;
+            cyclic_forward_edge.nodes.second = nfa.edges.back().back().nodes.second;
+            cyclic_edge.nodes.first = forward.back().nodes.second;
+            forward.push_back(cyclic_edge);
+            forward.push_front(cyclic_forward_edge);
+            forward.splice(forward.begin(), back);
+        }
+
         NFA construct_NFA_from_kleene_star(Automata& automata)
         {
             Edge::Node start_state = std::make_shared<State>(State{0, State::Type::initial});
@@ -216,36 +254,9 @@ namespace ttre
                     if (arg2.has_value())
                     {
                         if (arg2->edges.back().size() == 1)
-                        {
-                            auto back = arg2.value().edges.back();
-                            if (automata.size() >= 1)
-                            {
-                                auto top = automata.top();
-                                cyclic_forward_edge.nodes.first = top.edges.back().back().nodes.second;
-                            }
-                            else
-                            {
-                                cyclic_forward_edge.nodes.first = start_state;
-                                back.back().nodes.first->id++;
-                            }
-                            cyclic_forward_edge.nodes.second = branch.front().nodes.first;
-                            back.back().nodes.second = branch.back().nodes.first;
-                            cyclic_edge.nodes.first = back.back().nodes.second;
-                            cyclic_edge.nodes.second = cyclic_forward_edge.nodes.first;
-                            back.push_front(cyclic_forward_edge);
-                            back.push_back(cyclic_edge);
-                            branch.splice(branch.begin(), back);
-                        }
+                            connect_kleene_edge_on_single_branch(automata, start_state, cyclic_forward_edge, cyclic_edge, arg2.value().edges.back(), branch);
                         else
-                        {
-                            auto back = arg2.value().edges.back();
-                            cyclic_forward_edge.nodes.first = back.back().nodes.second;
-                            cyclic_forward_edge.nodes.second = arg.edges.back().back().nodes.second;
-                            cyclic_edge.nodes.first = branch.back().nodes.second;
-                            branch.push_back(cyclic_edge);
-                            branch.push_front(cyclic_forward_edge);
-                            branch.splice(branch.begin(), back);
-                        }
+                            connect_kleene_edge_multiple_branches(arg, cyclic_forward_edge, cyclic_edge, arg2.value().edges.back(), branch);
                     }
                     else
                     {
