@@ -3,11 +3,52 @@
 
 namespace ttre
 {
+
     namespace util
     {
-        std::set<Edge::Node> epsilon_closure(NFA const& nfa, Edge::Node const& state)
+
+        void Simulator::add_state(Edge::Node state)
         {
-            std::set<Edge::Node> next{};
+            this->new_states.emplace(state);
+            this->on.emplace_back(state);
+            auto epsilon_states = epsilon_closure(this->nfa, state);
+
+            for (auto const& t : epsilon_states)
+            {
+                if (std::ranges::find(this->on, t) == this->on.end())
+                {
+                    this->add_state(t);
+                }
+            }
+        }
+
+        void Simulator::get_next_closed_transition(NFA::Input c)
+        {
+            for (auto const& s : old_states)
+            {
+                for (auto const& t : transition(this->nfa, {s}, c))
+                {
+                    if (std::ranges::find(this->on, t) == this->on.end())
+                    {
+                        this->add_state(t);
+                    }
+                }
+            }
+            old_states.clear();
+            for (auto const& s : new_states)
+            {
+                this->old_states.emplace(s);
+                if (auto location = std::ranges::find(this->on, s); location != this->on.end())
+                {
+                    this->on.erase(location);
+                }
+            }
+            new_states.clear();
+        }
+
+        States epsilon_closure(NFA const& nfa, Edge::Node const& state)
+        {
+            States next{};
             std::ranges::for_each(nfa.edges,
                 [&next, &state](NFA::Branch const& branch) {
                     auto state_found = false;
@@ -36,9 +77,9 @@ namespace ttre
             return next;
         }
 
-        std::set<Edge::Node> epsilon_closure(NFA const& nfa, std::set<Edge::Node>& states)
+        States epsilon_closure(NFA const& nfa, States& states)
         {
-            std::set<Edge::Node> next{};
+            States next{};
             std::ranges::for_each(states,
                 [&nfa, &next](Edge::Node const& state) {
                     next.merge(epsilon_closure(nfa, state));
@@ -46,9 +87,9 @@ namespace ttre
             return next;
         }
 
-        std::set<Edge::Node> transition(NFA const& nfa, std::set<Edge::Node> const& states, NFA::Input symbol)
+        States transition(NFA const& nfa, States const& states, NFA::Input symbol)
         {
-            std::set<Edge::Node> next{};
+            States next{};
             for (auto const& branch : nfa.edges)
             {
                 auto state_found = false;

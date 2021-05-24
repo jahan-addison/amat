@@ -178,13 +178,14 @@ namespace ttre
             }
 
             NFA arg = automata.top();
-            std::optional<NFA> arg2 = std::nullopt;
+            std::optional<NFA> arg2{};
 
             automata.pop();
 
             if (automata.size() >= 1)
             {
                 arg2 = std::make_optional<NFA>(automata.top());
+                automata.pop();
             }
             else
             {
@@ -199,7 +200,7 @@ namespace ttre
             auto last_edge = arg.edges.back().back();
 
             std::ranges::for_each(arg.edges,
-                [&arg, &arg2, &end_state, &automata](NFA::Branch& branch) {
+                [&arg, &arg2, &end_state, &start_state, &automata](NFA::Branch& branch) {
                     auto back = arg2.has_value() ?
                         arg2.value().edges.back().back().nodes.second :
                         branch.front().nodes.first;
@@ -217,21 +218,33 @@ namespace ttre
                         if (arg2->edges.back().size() == 1)
                         {
                             auto back = arg2.value().edges.back();
-                            cyclic_forward_edge.nodes.first->id = 0;
-                            back.back().nodes.first->id = branch.front().nodes.first->id - 1;
+                            if (automata.size() >= 1)
+                            {
+                                auto top = automata.top();
+                                cyclic_forward_edge.nodes.first = top.edges.back().back().nodes.second;
+                            }
+                            else
+                            {
+                                cyclic_forward_edge.nodes.first = start_state;
+                                back.back().nodes.first->id++;
+                            }
+                            cyclic_forward_edge.nodes.second = branch.front().nodes.first;
                             back.back().nodes.second = branch.back().nodes.first;
                             cyclic_edge.nodes.first = back.back().nodes.second;
+                            cyclic_edge.nodes.second = cyclic_forward_edge.nodes.first;
                             back.push_front(cyclic_forward_edge);
                             back.push_back(cyclic_edge);
                             branch.splice(branch.begin(), back);
                         }
                         else
                         {
-                            auto head = branch.begin();
-                            cyclic_edge.nodes.first = head->nodes.second;
-                            branch.insert(branch.begin(), cyclic_forward_edge);
-                            std::advance(head, 1);
-                            branch.insert(head, cyclic_edge);
+                            auto back = arg2.value().edges.back();
+                            cyclic_forward_edge.nodes.first = back.back().nodes.second;
+                            cyclic_forward_edge.nodes.second = arg.edges.back().back().nodes.second;
+                            cyclic_edge.nodes.first = branch.back().nodes.second;
+                            branch.push_back(cyclic_edge);
+                            branch.push_front(cyclic_forward_edge);
+                            branch.splice(branch.begin(), back);
                         }
                     }
                     else
@@ -239,6 +252,7 @@ namespace ttre
                         branch.push_back(cyclic_edge);
                     }
                 });
+
 
             end_state.get()->id = arg.edges.back().back().nodes.first.get()->id + 2;
 
@@ -293,13 +307,14 @@ namespace ttre
         {
             if (automata.size() < 2)
             {
-                throw std::runtime_error("could not constract NFA from concat operator and the stack");
+                return automata.top();
+                //throw std::runtime_error("could not constract NFA from concat operator and the stack");
             }
             NFA arg1 = automata.top();
             automata.pop();
             NFA arg2 = automata.top();
             automata.pop();
-            arg1.connect_branch(arg2.edges.front(), arg1.edges.back());
+            arg1.connect_branch(arg2.edges.back(), arg1.edges.back());
             return arg1;
         }
 

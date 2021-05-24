@@ -29,16 +29,15 @@ Edge::Node assert_and_get_state_exists_by_id(std::set<Edge::Node> const& items, 
 TEST_CASE("ttre::util::epsilon_closure : overload 1 : kleene star case 1")
 {
     auto fixture_1 = NFA_Fixture("a*bb");
-
     auto test = util::epsilon_closure(fixture_1.nfa, fixture_1.nfa.start);
-
     CHECK(test.size() == 1);
-    assert_and_get_state_exists_by_id(test, 4);
-
+    assert_and_get_state_exists_by_id(test, 2);
     test = util::epsilon_closure(fixture_1.nfa, *test.begin());
-
-    CHECK(test.size() == 1);
-
+    CHECK(test.size() == 2);
+    test = util::epsilon_closure(fixture_1.nfa, assert_and_get_state_exists_by_id(fixture_1.nfa.states, 2));
+    CHECK(test.size() == 2);
+    assert_and_get_state_exists_by_id(test, 4);
+    assert_and_get_state_exists_by_id(test, 0);
 }
 
 TEST_CASE("ttre::util::epsilon_closure : overload 1 : kleene star case 2")
@@ -134,19 +133,6 @@ TEST_CASE("ttre::util::epsilon_closure : overload 2 : case 2")
 }
 
 
-TEST_CASE("ttre::util::transition : kleene star case 1")
-{
-    auto fixture_1 = NFA_Fixture("a*bb");
-    auto states = util::transition(fixture_1.nfa, {fixture_1.nfa.states}, 'a');
-    CHECK(states.size() == 2);
-    assert_and_get_state_exists_by_id(states, 2);
-    assert_and_get_state_exists_by_id(states, 0);
-    states = util::transition(fixture_1.nfa, fixture_1.nfa.states, 'b');
-    CHECK(states.size() == 1);
-    assert_and_get_state_exists_by_id(states, 5);
-
-}
-
 TEST_CASE("ttre::util::transition : union case 1")
 {
     auto fixture_1 = NFA_Fixture("(ab)|cde");
@@ -171,8 +157,29 @@ TEST_CASE("ttre::util::transition : union case 1")
 
 }
 
+TEST_CASE("ttre::util::transition : union case 2")
+{
+    auto fixture_1 = NFA_Fixture("ab|aaa");
+    auto states = util::transition(fixture_1.nfa, fixture_1.nfa.states, 'a');
+    states = util::transition(fixture_1.nfa, fixture_1.nfa.states, 'b');
+    CHECK(states.size() == 1);
+    assert_and_get_state_exists_by_id(states, 14);
+    states = util::transition(fixture_1.nfa, fixture_1.nfa.states, 'a');
+    states = util::transition(fixture_1.nfa, states, 'a');
+    states = util::transition(fixture_1.nfa, states, 'a');
+    CHECK(states.size() == 1);
+    assert_and_get_state_exists_by_id(states, 14);
+}
 
-TEST_CASE("ttre::util::transition : kleene star case 2")
+TEST_CASE("ttre::util::transition : union case 3")
+{
+    // auto fixture_1 = NFA_Fixture("ab*");
+    // auto states = util::transition(fixture_1.nfa, fixture_1.nfa.states, 'a');
+    // states = util::transition(fixture_1.nfa, states, 'b');
+
+}
+
+TEST_CASE("ttre::util::transition : kleene star case 1")
 {
     auto fixture_1 = NFA_Fixture("(acab)*");
     auto states = util::transition(fixture_1.nfa, {fixture_1.nfa.start}, 'b');
@@ -212,10 +219,11 @@ TEST_CASE("ttre::util::transition : concatenation case")
     assert_and_get_state_exists_by_id(states, 2);
     assert_and_get_state_exists_by_id(states, 3);
     states = util::transition(fixture_1.nfa, states, 'a');
-    auto cyclic = assert_and_get_state_exists_by_id(fixture_1.nfa.states, 6);
+    auto cyclic = assert_and_get_state_exists_by_id(fixture_1.nfa.states, 5);
     states = util::transition(fixture_1.nfa, {cyclic}, 'a');
-    CHECK(states.size() == 1);
+    CHECK(states.size() == 2);
     assert_and_get_state_exists_by_id(states, 5);
+    assert_and_get_state_exists_by_id(states, 7);
 }
 
 
@@ -266,7 +274,58 @@ TEST_CASE("ttre::util::transition : strong case")
 }
 
 
+// TEST_CASE("ttre::util::transition : kleene star case 2")
+// {
+//     auto fixture_1 = NFA_Fixture("(ac)*bb");
+//     auto states = util::transition(fixture_1.nfa, {fixture_1.nfa.states}, 'a');
+//     util::print_NFA(fixture_1.nfa, "(ac)*bb");
+//     util::print_states(states);
+
+//     CHECK(states.size() == 2);
+//     assert_and_get_state_exists_by_id(states, 2);
+//     assert_and_get_state_exists_by_id(states, 3);
+//     states = util::transition(fixture_1.nfa, states, 'c');
+
+//     assert_and_get_state_exists_by_id(states, 0); // the cyclic edge
+//     assert_and_get_state_exists_by_id(states, 3);
+//     states = util::transition(fixture_1.nfa, {assert_and_get_state_exists_by_id(fixture_1.nfa.states, 4)}, 'b');
+//     CHECK(states.size() == 1);
+//     assert_and_get_state_exists_by_id(states, 7);
+//     states = util::transition(fixture_1.nfa, states, 'b');
+//     CHECK(states.size() == 1);
+//     assert_and_get_state_exists_by_id(states, 7);
+// }
+
+TEST_CASE("ttre::util::transition : kleene star case 3")
+{
+    auto fixture_1 = NFA_Fixture("aac*bb");
+    auto states = util::transition(fixture_1.nfa, {fixture_1.nfa.states}, 'a');
+    CHECK(states.size() == 3);
+    assert_and_get_state_exists_by_id(states, 2);
+    assert_and_get_state_exists_by_id(states, 3);
+    assert_and_get_state_exists_by_id(states, 6);
+
+    states = util::transition(fixture_1.nfa, states, 'a');
+    CHECK(states.size() == 2);
+    assert_and_get_state_exists_by_id(states, 6);
+    assert_and_get_state_exists_by_id(states, 3);
+    states = util::transition(fixture_1.nfa, states, 'c');
+    CHECK(states.size() == 2);
+    assert_and_get_state_exists_by_id(states, 6);
+    assert_and_get_state_exists_by_id(states, 3);
+    states = util::transition(fixture_1.nfa, {assert_and_get_state_exists_by_id(fixture_1.nfa.states, 6)}, 'b');
+    CHECK(states.size() == 1);
+    assert_and_get_state_exists_by_id(states, 9);
+    states = util::transition(fixture_1.nfa, states, 'b');
+    CHECK(states.size() == 1);
+    assert_and_get_state_exists_by_id(states, 9);
+}
+
 TEST_CASE("ttre::match")
 {
-    std::cout << std::boolalpha << " " << match<"(ab)*|cd|abc">("abab");
+    //print<"abc|aaa">();
+    //std::cout << std::boolalpha << " " << match<"abc|aaa">("abc");
+    print<"abc|def">();
+    CHECK(match<"abc|aaa">("abc") == true);
 }
+

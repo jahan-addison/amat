@@ -5,6 +5,7 @@
 #include <ttre/lexer.h> 
 #include <ttre/parser.h>
 #include <ttre/nfa.h>
+#include <iostream>
 
 #include <set>
 #include <algorithm>
@@ -42,14 +43,31 @@ namespace ttre
 
     namespace util
     {
+        using States = std::set<Edge::Node>;
+
         /**
-         * Utility functions to simulate an NFA by on-the-fly subset construction on ttre::NFA.
+         * Utilities to simulate an NFA by on-the-fly subset construction on ttre::NFA.
          */
 
-        std::set<Edge::Node> epsilon_closure(NFA const& nfa, Edge::Node const& state);
-        std::set<Edge::Node> epsilon_closure(NFA const& nfa, std::set<Edge::Node>& states);
+        struct Simulator
+        {
+            Simulator() = delete;
+            Simulator(NFA nfa_) : nfa(nfa_)
+            {
+                old_states = nfa_.states;
+            }
+            void add_state(Edge::Node state);
+            void get_next_closed_transition(NFA::Input c);
 
-        std::set<Edge::Node> transition(NFA const& nfa, std::set<Edge::Node> const& states, NFA::Input symbol);
+            NFA nfa;
+            States old_states{};
+            States new_states{};
+            std::vector<Edge::Node> on{};
+        };
+
+        States epsilon_closure(NFA const& nfa, Edge::Node const& state);
+        States epsilon_closure(NFA const& nfa, States& states);
+        States transition(NFA const& nfa, States const& states, NFA::Input symbol);
 
     } // namespace util
 
@@ -70,15 +88,14 @@ namespace ttre
     {
         constexpr auto content = RegExp.r;
         auto nfa = util::construct_NFA_from_regular_expression(content);
-        auto step = util::epsilon_closure(nfa, nfa.start);
-
+        util::Simulator dfa{nfa};
+        dfa.add_state(nfa.start);
         for (auto const& c : str)
         {
-            step = util::transition(nfa, step, c);
-            step.merge(util::epsilon_closure(nfa, step));
+            dfa.get_next_closed_transition(c);
         }
-        util::print_states(step);
-        return std::ranges::equal(step, nfa.accepted);
+
+        return std::ranges::equal(dfa.old_states, nfa.accepted);
     }
 
 } // namespace ttre

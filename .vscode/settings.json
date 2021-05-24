@@ -57,6 +57,7 @@
     "thread": "cpp",
     "future": "cpp",
     "variant": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "bitset": "cpp"
   }
 }
