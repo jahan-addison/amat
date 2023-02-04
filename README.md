@@ -1,7 +1,7 @@
 amat
 ====
 
-This is a small Regular Expression engine in C++20.
+This is a small Regular Expression engine in C++20 as a single header library.
 
 ## Details
 
@@ -61,13 +61,17 @@ Branches: 2
 * union operator
 * kleene star
 
-### Build
+### Building
 
-> `make all`
+Build by making a build directory (i.e. `build/`), run `cmake` in that dir, and then use `make` to build the desired target.
 
+Example:
 
-### Tests
+``` bash
+> mkdir build && cd build
+> cmake .. -DCMAKE_BUILD_TYPE=[Debug | Coverage | Release]
+```
 
-> `make test`
+Then, to run the tests in your build directory:
 
-
+`./amat_test`

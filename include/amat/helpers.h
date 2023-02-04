@@ -1,7 +1,9 @@
+#pragma once
+
 #include <iomanip>
 #include <iostream>
 #include <string_view>
-#include <amat/helpers.h>
+
 #include <amat/nfa.h>
 
 namespace amat {
@@ -72,5 +74,5 @@ print_NFA(NFA const& nfa, std::string_view expr)
     print_edges(edges);
 }
 
-}
-}
+} // namespace util
+} // namespace amat
