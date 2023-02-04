@@ -1,7 +1,7 @@
 amat
 ====
 
-This is a small Regular Expression engine.
+This is a small Regular Expression engine in C++20.
 
 ## Details
 
@@ -12,7 +12,7 @@ The library makes [use of the new C++20 literal classes as Non-Type template par
 
 ## Library Functions
 
-## amat::match
+### amat::match
 
 Returns `true` or `false` based on an input string and a regular expression.
 
@@ -29,7 +29,7 @@ amat::match<"a*|bb">("bb"); // true
 // ... and so on
 ```
 
-## amat::print
+### amat::print
 
 Prints the NFA as a transitional graph and all of its edges and states.
 
