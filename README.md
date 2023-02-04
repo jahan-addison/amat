@@ -3,7 +3,7 @@ amat
 
 This is a small Regular Expression engine.
 
-# Details
+## Details
 
 ## Usage
 
