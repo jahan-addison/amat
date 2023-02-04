@@ -24,6 +24,7 @@ amat::match<"abc|def">("abc");
 
 ```C++
 amat::match<"abc|def">("abc"); // true
+amat::match<"(ab)*|cd|abc">("ababab"); // true
 amat::match<"a*|bb">("b"); // false
 amat::match<"a*|bb">("bb"); // true
 // ... and so on
