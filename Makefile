@@ -1,17 +1,18 @@
 CXX      := -g++
-CXXFLAGS := -pedantic-errors --std=c++2a -Wall -Wextra -Werror
+CXXFLAGS := -pedantic-errors -std=c++20 -Wall -Wextra -Werror
 LDFLAGS  := -L/usr/lib -lstdc++ -lm
 BUILD    := ./build
+NAME     := amat
 APP_DIR  := $(BUILD)/apps
 TEST_DIR := ./test
 OBJ_DIR  := $(BUILD)/objects
 TARGET   := program
 INCLUDE  := -I.
-SRC      :=                   \
-	 $(wildcard ttre/*.cc)      \
+SRC      :=                    \
+	 $(wildcard $(NAME)/*.cc)  \
 
-TEST      :=                  \
-	 $(wildcard test/*.cc)      \
+TEST      :=                   \
+	 $(wildcard test/*.cc)     \
 
 OBJECTS  := $(SRC:%.cc=$(OBJ_DIR)/%.o)
 DEPENDENCIES \
@@ -25,7 +26,7 @@ DEPENDENCIES \
 all: build $(APP_DIR)/$(TARGET)
 
 test: build $(TEST_DIR)/$(TARGET)
-	./test/test_runner 
+	./test/test_runner
 	@rm -f ./test/test_runner
 
 $(OBJ_DIR)/%.o: %.cc

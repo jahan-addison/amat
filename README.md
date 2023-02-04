@@ -1,7 +1,7 @@
-ttre
+amat
 ====
 
-This is a Regular Expression engine by way of Thompson's Construction, or the McNaughton-Yamada-Thompson's algorithm (`grep` flavor). I plan to provide the library as a compiled single-header for convenience.
+This is a small Regular Expression engine.
 
 # Details
 
@@ -12,31 +12,31 @@ The library makes [use of the new C++20 literal classes as Non-Type template par
 
 ## Library Functions
 
-## ttre::match
+## amat::match
 
 Returns `true` or `false` based on an input string and a regular expression.
 
 ```C++
-ttre::match<"abc|def">("abc");
+amat::match<"abc|def">("abc");
 ```
 
 <u>Examples:</u>
 
 ```C++
-ttre::match<"abc|def">("abc"); // true 
-ttre::match<"a*|bb">("b"); // false 
-ttre::match<"a*|bb">("bb"); // true
+amat::match<"abc|def">("abc"); // true
+amat::match<"a*|bb">("b"); // false
+amat::match<"a*|bb">("bb"); // true
 // ... and so on
 ```
 
-## ttre::print
+## amat::print
 
 Prints the NFA as a transitional graph and all of its edges and states.
 
-<u>Example:</u>
+<u>Examples:</u>
 
 ```C++
-ttre::print<"abc|def">();
+amat::print<"abc|def">();
 ```
 
 Output:
