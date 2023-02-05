@@ -382,8 +382,6 @@ construct_NFA_from_concatenation(Automata& automata)
 {
     if (automata.size() < 2) {
         return automata.top();
-        // throw std::runtime_error("could not constract NFA from concat
-        // operator and the stack");
     }
     NFA arg1 = automata.top();
     automata.pop();

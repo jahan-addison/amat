@@ -1,46 +1,60 @@
-amat
-====
+<img width="50%" src="/logo/amat.png">
 
 This is a small Regular Expression engine in C++20 as a single header library.
 
-## Details
-
-## Usage
-
 The library makes [use of the new C++20 literal classes as Non-Type template parameters](https://ctrpeach.io/posts/cpp20-class-as-non-type-template-param/), and provides a type-safe regular expression literal and functions that accept the literal type at compile-time.
-
 
 ## Library Functions
 
 ### amat::match
+---
 
-Returns `true` or `false` based on an input string and a regular expression.
+Returns a boolean based on match of an input string and a regular expression literal.
 
+* Example:
 ```C++
-amat::match<"abc|def">("abc");
+#include <iostream>
+#include <amat.h>
+
+int main() {
+    if (amat::match<"abc|def">("abc")) {
+        std::cout << "match!" << std::endl;
+    }
+    return 0;
+}
 ```
 
-<u>Examples:</u>
+* More examples:
 
 ```C++
-amat::match<"abc|def">("abc"); // true
-amat::match<"(ab)*|cd|abc">("ababab"); // true
-amat::match<"a*|bb">("b"); // false
-amat::match<"a*|bb">("bb"); // true
-// ... and so on
+#include <amat.h>
+
+int main() {
+    amat::match<"abc|def">("abc"); // true
+    amat::match<"(ab)*|cd|abc">("ababab"); // true
+    amat::match<"a*|bb">("b"); // false
+    amat::match<"a*|bb">("bb"); // true
+    return 0;
+}
 ```
 
 ### amat::print
+---
 
-Prints the NFA as a transitional graph and all of its edges and states.
+Prints the automata of a regular expression as an adjacency-list transitional graph (great for debugging).
 
-<u>Examples:</u>
+* Example
 
 ```C++
-amat::print<"abc|def">();
+#include <amat.h>
+
+int main() {
+    amat::print<"abc|def">();
+    return 0;
+}
 ```
 
-Output:
+* Example output:
 
 ```
 Regular Expression: "abc|def"
@@ -55,13 +69,15 @@ Branches: 2
 0 ε 9  ->  9 d 10  ->  11 e 12  ->  13 f 14  ->  15 ε 16
 ```
 
-### Supported operators
+## Supported operators
 
 * concatenation
 * union operator
 * kleene star
 
-### Building
+More to come!
+
+## Building
 
 Build by making a build directory (i.e. `build/`), run `cmake` in that dir, and then use `make` to build the desired target.
 
