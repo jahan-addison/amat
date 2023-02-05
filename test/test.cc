@@ -1,4 +1,4 @@
-#include <amat.h>
+#include <amat/amat.h>
 
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>

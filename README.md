@@ -14,7 +14,7 @@ Returns a boolean based on match of an input string and a regular expression lit
 * Example:
 ```C++
 #include <iostream>
-#include <amat.h>
+#include <amat/amat.h>
 
 int main() {
     if (amat::match<"abc|def">("abc")) {
@@ -27,7 +27,7 @@ int main() {
 * More examples:
 
 ```C++
-#include <amat.h>
+#include <amat/amat.h>
 
 int main() {
     amat::match<"abc|def">("abc"); // true
@@ -46,7 +46,7 @@ Prints the automata of a regular expression as an adjacency-list transitional gr
 * Example
 
 ```C++
-#include <amat.h>
+#include <amat/amat.h>
 
 int main() {
     amat::print<"abc|def">();
