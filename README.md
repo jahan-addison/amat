@@ -84,10 +84,9 @@ Build by making a build directory (i.e. `build/`), run `cmake` in that dir, and 
 Example:
 
 ``` bash
-> mkdir build && cd build
-> cmake .. -DCMAKE_BUILD_TYPE=[Debug | Coverage | Release]
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=[Debug | Coverage | Release]
+make
+# to run the tests:
+./amat_test
 ```
-
-Then, to run the tests in your build directory:
-
-`./amat_test`
