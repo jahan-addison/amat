@@ -1,6 +1,6 @@
 <img width="50%" src="/logo/amat.png">
 
-This is a small Regular Expression engine in C++20 as a single header library.
+This is a small Regular Expression engine in C++20 as a header-only library.
 
 The library makes [use of the new C++20 literal classes as Non-Type template parameters](https://ctrpeach.io/posts/cpp20-class-as-non-type-template-param/), and provides a type-safe regular expression literal and functions that accept the literal type at compile-time.
 
